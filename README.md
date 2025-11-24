@@ -11,12 +11,18 @@ If you need to run the server locally for development or testing:
    cd src
    ```
 
-2. Install the required dependencies:
+2. Setup virtual env
+   ```bash
+   python -m venv .venv 
+   .\.venv\Scripts\activate
+   ```
+
+3. Install the required dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Start the server:
+4. Start the server:
    ```bash
    python server.py
    ```
@@ -34,7 +40,8 @@ To connect to this MCP server in VSCode with Cursor or other MCP-compatible edit
 {
   "mcp.servers": {
     "spec-fetcher": {
-      "url": "http://localhost:8100"
+      "type": "sse",
+		  "url": "http://localhost:8100/sse"
     }
   }
 }
@@ -42,9 +49,14 @@ To connect to this MCP server in VSCode with Cursor or other MCP-compatible edit
 
 3. Restart VSCode/Cursor for the changes to take effect.
 
-The server should already be running and accessible via SSE on port 8100.
+The server should already be running and accessible via SSE on port 8100. You could also use VS Code command `Developer: Reload Window` to make sure your changes take effect.
+
+4. Add other MCP Servers 
+
+- [GitHub MCP Server](https://github.com/github/github-mcp-server)
 
 ## Available Tools
 
+- `content_generation_best_practice()` - Provides the best practice for generating content based on specifications.
 - `list_specs()` - List all available specifications from the index
 - `fetch_spec(name: str)` - Fetch the content of a specification by its name
