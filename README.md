@@ -2,10 +2,21 @@
 
 An MCP (Model Context Protocol) server for fetching PMAgent specifications.
 
-## Quick Start
+## What does this extension do?
 
-1.  **Install the Extension**: Install the `PMAgent Spec MCP` extension in VS Code or Cursor.
-2.  **Ready to Use**: The extension automatically configures your MCP settings to connect to the remote production server. You can immediately start using tools like `list_specs()` and `fetch_spec()`.
+This VS Code / Cursor extension **automatically registers the PMAgent MCP server** for you.
+
+Instead of manually configuring JSON files or connection strings, simply installing this extension will add the PMAgent server to your MCP configuration, making tools like `fetch_spec` immediately available to your AI assistant.
+
+## Installation
+
+The extension is available on the **Visual Studio Marketplace**.
+
+1.  Open the **Extensions** view in VS Code or Cursor (`Cmd+Shift+X` or `Ctrl+Shift+X`).
+2.  Search for **"PMAgent Spec MCP"**.
+3.  Click **Install**.
+
+That's it! The extension will automatically register the server connection. You can check your Output panel ("PMAgent MCP" channel) to see the confirmation.
 
 ## Configuration
 
