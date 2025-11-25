@@ -10,8 +10,23 @@ mcp = FastMCP("Spec Fetcher")
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "../spec")
+PROMPT_DIR = os.path.join(DOCS_DIR, "../prompts")
+
 INDEX_FILE = os.path.join(DOCS_DIR, "index.yml")
+PROMPT_FILE = os.path.join(PROMPT_DIR, "system_prompts.md")
 REPO_BASE_URL = "https://raw.githubusercontent.com/Azure/PMAgent-Spec/main"
+
+@mcp.tool()
+def content_generation_best_practice() -> str:
+    """
+    Provides the best practice for generating documentation (e.g., readme, revision history, product status report, etc.). Always use this at first to learn the bet pratice.
+    """
+    try:
+        with open(PROMPT_FILE, 'r') as f:
+            prompts = f.read()
+            return prompts.strip()
+    except Exception:
+        return "Error: Could not read system prompts for best practice."
 
 @mcp.tool()
 def list_specs() -> str:

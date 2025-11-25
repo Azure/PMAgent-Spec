@@ -1,4 +1,6 @@
-- name: sdk
-  file: sdk.MD
-  description: Overview of the SDK, including prerequisites, installation, and quick start.
-
+- name: sdk_readme
+  file: sdk_readme.md
+  description: This spec is for generating or updating an SDK README by analyzing the SDK’s source code, public APIs, dependencies, and sample projects. It guides the AI to extract technical details from a GitHub repo or local workspace and produce clear developer documentation, including installation, quick start, API overview, and examples.
+- name: revision_history
+  file: revision_history.md
+  description: This spec is for generating revision history or release notes by collecting GitHub PRs and Azure DevOps work items associated with a product release. It guides the AI to analyze PR metadata, branches, epics, features, stories, bugs, and related items to produce a structured changelog describing key improvements, fixes, and updates for the release.
