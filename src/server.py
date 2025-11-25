@@ -18,8 +18,14 @@ REPO_BASE_URL = "https://raw.githubusercontent.com/Azure/PMAgent-Spec/main"
 
 @mcp.tool()
 def content_generation_best_practice() -> str:
-    """
-    Provides the best practice for generating documentation (e.g., readme, revision history, product status report, etc.). Always use this at first to learn the bet pratice.
+    """**ALWAYS CALL THIS FIRST** when generating any documentation, README, release notes, reports, or content.
+    
+    Returns essential best practices and system prompts for spec-driven content generation including:
+    - Workflow rules and input validation requirements
+    - Task planning and quality checklist criteria  
+    - Output formatting standards
+    
+    Use before: README generation, revision history, product status reports, release notes, or any documentation task.
     """
     try:
         with open(PROMPT_FILE, 'r') as f:
@@ -30,9 +36,12 @@ def content_generation_best_practice() -> str:
 
 @mcp.tool()
 def list_specs() -> str:
-    """
-    List all available specifications from the index.
-    Returns a formatted string listing spec names and descriptions.
+    """List all available content specification templates (SDK README, Revision History, Product Status Report, etc.).
+    
+    Use this to discover which specs are available before generating content.
+    Returns spec names with descriptions to help choose the right template for your documentation task.
+    
+    Call this after content_generation_best_practice and before fetch_spec.
     """
     try:
         # Try local index first
@@ -70,11 +79,13 @@ def list_specs() -> str:
 
 @mcp.tool()
 def fetch_spec(name: str) -> str:
-    """
-    Fetch the content of a specification by its name.
-    First tries to fetch locally, then falls back to the public repository.
+    """Fetch a complete specification template defining structure, sections, inputs, and quality criteria for content generation.
+    
+    Use this after calling list_specs to get the full spec for your chosen documentation type.
+    The spec includes: required inputs, section structure, tone guidelines, task planning rules, and quality checklist.
+    
     Args:
-        name: The name of the spec to fetch (as listed in index).
+        name: The name of the spec as shown in list_specs.
     """
     try:
         # 1. Get Index Data (Local or Remote)
