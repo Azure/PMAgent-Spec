@@ -57,9 +57,6 @@ jobs:
                   resources:
                     cpu: 0.5
                     memory: 1.0Gi
-                  env:
-                    - name: PORT
-                      value: "8100"
           EOF
 
       - name: Update Container App
