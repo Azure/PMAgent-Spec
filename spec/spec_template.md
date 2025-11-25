@@ -28,17 +28,35 @@ Describe what this spec is for, what type of content it defines, and the expecte
 ---
 
 ## 4. Required Inputs
-List of inputs the agent must gather before writing:
-- Domain knowledge
-- Data or metrics
-- Examples
-- Business context
-- User-provided context
+
+### 4.1 User-Provided Inputs
+Inputs that must be collected from the user before proceeding:
+
+**Mandatory:**
+- <Input name>: <Description and purpose>
+- <Input name>: <Description and purpose>
+
+**Optional:**
+- <Input name>: <Description, purpose, and default behavior if not provided>
+- <Input name>: <Description, purpose, and default behavior if not provided>
+
+### 4.2 Agent-Gathered Inputs
+Inputs the agent must collect via tools or retrieval before writing:
+
+**Mandatory:**
+- <Input name>: <Description and purpose>
+- <Input name>: <Description and purpose>
+
+**Optional:**
+- <Input name>: <Description, purpose, and default behavior if not provided>
+- <Input name>: <Description, purpose, and default behavior if not provided>
 
 Inputs may come from:
+- Built-in tools for GitHub Copilot VS Code.
 - MCP tools (GitHub, SharePoint, DB, API, etc.)
-- Direct user input
-- Previous conversation state
+- Large Language Model tools for GitHub Copilot VS Code.
+- Context/State (extract from conversation or previous state)
+- Local files (files in current workspace)
 
 ---
 

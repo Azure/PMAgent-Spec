@@ -50,35 +50,48 @@ The final README must follow a consistent, professional format suitable for GitH
 ---
 
 ## 4. Required Inputs
-The agent must gather the following inputs before generating the README:
 
-### From the SDK Codebase
-- List of exported modules and namespaces  
-- Public classes, interfaces, methods, and functions  
-- Constructor signatures and argument lists  
-- Parameter types, return values, and default parameters  
-- Runtime dependencies  
-- Supported platforms/environments  
-- Entry points or main modules  
-- Public constants or configuration objects (if any)
+### 4.1 User-Provided Inputs
+Inputs that must be collected from the user before proceeding:
 
-### From Examples / Samples
-- Code samples located in `/examples`, `/sample`, `/demo`, or similar directories  
-- End-to-end runnable examples  
-- Example usage patterns or tests that demonstrate intended SDK usage  
+**Mandatory:**
+- SDK location: Repository URL (for GitHub) or local workspace path or current workspace
+- SDK name: Name of the SDK (if not auto-detectable from metadata)
 
-### From Metadata Files
-- SDK name and description  
-- Installation instructions derived from:
-  - `package.json`, `pyproject.toml`, `setup.py`, `go.mod`, or similar  
-- Licensing information from `LICENSE`  
-- Repository links  
-- Release notes or CHANGELOG if available  
+**Optional:**
+- Target branch or tag: Specific version to document (defaults to main/master branch)
+- Custom sections: Additional sections or content to include
+- Output file path: Where to save the generated README (defaults to current workspace)
 
-### Supported Sources via MCP Tools
-- **GitHub MCP**: repository files, directories, tags, releases, metadata  
-- **Local FileSystem MCP**: local code, examples, manifests  
-- **Optional**: web search or package registry lookup for validation
+### 4.2 Agent-Gathered Inputs
+Inputs the agent must collect via tools or retrieval before writing:
+
+**Mandatory:**
+- List of exported modules and namespaces
+- Public classes, interfaces, methods, and functions
+- Constructor signatures and argument lists
+- Parameter types, return values, and default parameters
+- Runtime dependencies from manifest files (`package.json`, `pyproject.toml`, `setup.py`, `go.mod`, etc.)
+- Entry points or main modules
+- Licensing information from `LICENSE` file
+
+**Optional:**
+- Code samples from `/examples`, `/sample`, `/demo`, or similar directories
+- End-to-end runnable examples
+- Example usage patterns or tests that demonstrate intended SDK usage
+- Supported platforms/environments
+- Public constants or configuration objects
+- Repository links and metadata
+- Release notes or CHANGELOG content
+- Build badges and CI/CD information
+
+Inputs may come from:
+- Built-in tools for GitHub Copilot VS Code
+- MCP tools (GitHub MCP for repositories, Local FileSystem MCP for local code)
+- Large Language Model tools for GitHub Copilot VS Code
+- Context/State (extract from conversation or previous state)
+- Local files (files in current workspace)
+- Package registry lookup for validation (optional)
 
 If critical inputs are missing, the agent must ask the user for clarification or alternate paths.
 

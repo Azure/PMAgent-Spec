@@ -52,49 +52,58 @@ Expertise Level: Intermediate to advanced (technical familiarity expected).
 
 ## 4. Required Inputs
 
-### Release Definition (Code Base)
-The release may be defined by:
-- A GitHub branch (e.g., `release/v1.0`)  
-- Git tags  
-- A commit range  
-- A release branch naming convention  
+### 4.1 User-Provided Inputs
+Inputs that must be collected from the user before proceeding:
 
-The agent must detect PRs associated with:
-- The target branch  
-- The commit range  
-- Merged PRs between two tags  
+**Mandatory:**
+- Release identifier: One of the following:
+  - GitHub branch name (e.g., `release/v1.0`)
+  - Git tag or tag range (e.g., `v1.0.0` or `v1.0.0..v1.1.0`)
+  - Commit range (e.g., SHA range)
+  - Azure DevOps Iteration Path (e.g., `2025/Q1`)
 
-### Release Definition (DevOps Tooling)
-The release may be defined by one or more of:
-- **Iteration Path** (e.g., `2025/Q1`)  
-- **Area Path** (e.g., `Product/SDK`)  
-- **Tags** (e.g., `Release-1.0`, `Hotfix`, `Customer-Request`)  
-- **Work Item Types** (Epic, Feature, Story, Task, Bug)  
-- **Custom fields** (Release ID, Milestone, etc.)
+**Optional:**
+- Release name: Human-readable name for the release (defaults to branch/tag name)
+- Release date: Date of the release (defaults to latest commit/merge date)
+- Area Path: Azure DevOps area path filter (e.g., `Product/SDK`)
+- Additional filters: Custom tags, labels, or work item queries
+- Output file path: Where to save the generated revision history
 
-### Required Work Item Data
-- ID  
-- Title  
-- Description (if relevant)  
-- State (Done, Closed, Resolved)  
-- Parent-child hierarchy  
-  - Epic → Feature → User Story → Task  
-- Linked PRs  
-- Linked commits  
-- Tags / Iteration / Area Path  
-- Priority / Severity (for bugs)
+### 4.2 Agent-Gathered Inputs
+Inputs the agent must collect via tools or retrieval before writing:
 
-### Required PR Data (GitHub)
-- PR number  
-- Title  
-- Description  
-- Labels  
-- Files changed  
-- Linked issues / work items  
-- Author & reviewers  
-- Merge date  
-- Associated branch  
-- Breaking change labels (if any)  
+**Mandatory:**
+- Pull Request data:
+  - PR number, title, description
+  - Labels and categorization
+  - Author & reviewers
+  - Merge date
+  - Associated branch
+  - Linked issues/work items
+- Work Item data (if using Azure DevOps):
+  - ID, title, state
+  - Work item type (Epic, Feature, Story, Task, Bug)
+  - Parent-child hierarchy (Epic → Feature → User Story → Task)
+  - Linked PRs and commits
+  - Tags, Iteration Path, Area Path
+- Merged PRs for the specified release scope
+
+**Optional:**
+- PR files changed (for detailed analysis)
+- Work item descriptions (if relevant)
+- Priority/Severity for bugs
+- Breaking change indicators from PR labels or descriptions
+- Custom work item fields (Release ID, Milestone, etc.)
+- Commit messages and authors
+- Review comments and feedback
+
+Inputs may come from:
+- Built-in tools for GitHub Copilot VS Code
+- MCP tools (GitHub MCP for PRs/commits, Azure DevOps MCP for work items)
+- Large Language Model tools for GitHub Copilot VS Code
+- Context/State (extract from conversation or previous state)
+- Local files (CHANGELOG, release notes in current workspace)
+- Git repository history and metadata  
 
 ---
 

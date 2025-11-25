@@ -47,6 +47,17 @@ If you want to run the server locally and test changes:
 3.  **Connect Extension**:
     Update the extension setting (as above) to `http://localhost:8100/sse` and reload the window.
 
+    ```json
+        {
+            "servers": {
+                "spec-fetcher": {
+                    "type": "sse",
+                    "url": "http://localhost:8100/sse"
+                }
+            }
+        }
+    ```
+
 ## Deployment
 
 This repository uses GitHub Actions for Continuous Deployment.
@@ -57,5 +68,11 @@ This repository uses GitHub Actions for Continuous Deployment.
 
 ## Available Tools
 
+-   `content_generation_best_practice()` - Learn the best practice of content generation.
 -   `list_specs()` - List all available specifications from the index.
 -   `fetch_spec(name: str)` - Fetch the content of a specification by its name.
+
+## Useful MCP Servers 
+
+- [GitHub MCP Server](https://github.com/github/github-mcp-server)
+- [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)
