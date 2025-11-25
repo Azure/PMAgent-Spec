@@ -1,0 +1,40 @@
+{
+  "name": "pmagent-spec-mcp",
+  "publisher": "pmagent",
+  "displayName": "PMAgent Spec MCP",
+  "description": "VSCode extension to register PMAgent Spec MCP server",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "PMAgent Spec MCP",
+      "properties": {
+        "pmagentSpecMcp.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:8080/mcp",
+          "description": "URL of the PMAgent Spec MCP server"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+

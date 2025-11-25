@@ -1,0 +1,70 @@
+name: Build and Deploy PMAgent Spec MCP
+
+concurrency:
+  group: pmagent-spec-mcp-${{ github.ref }}
+  cancel-in-progress: true  
+
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - 'src/**'
+      - 'spec/**'
+      - 'Dockerfile'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write    # for OIDC JWT
+      contents: read
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR Login
+        run: |
+          az acr login --name pmagent -g pmagent
+
+      - name: Set time tag
+        run: echo "TIME_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+          
+      # Build & push image
+      - name: Build and Push
+        run: |
+          docker build -t pmagent.azurecr.io/pmagent-spec-mcp:${TIME_TAG} .
+          docker push pmagent.azurecr.io/pmagent-spec-mcp:${TIME_TAG}
+
+      - name: Generate container spec
+        run: |
+          cat <<EOF > containers.yaml
+          properties:
+            template:
+              containers:
+                - name: spec-fetcher
+                  image: pmagent.azurecr.io/pmagent-spec-mcp:${TIME_TAG}
+                  resources:
+                    cpu: 0.5
+                    memory: 1.0Gi
+                  env:
+                    - name: PORT
+                      value: "8100"
+          EOF
+
+      - name: Update Container App
+        run: |
+          az containerapp update \
+            --name pmagent-spec \
+            --resource-group pmagent \
+            --yaml containers.yaml
