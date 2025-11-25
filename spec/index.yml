@@ -4,3 +4,6 @@
 - name: revision_history
   file: revision_history.md
   description: This spec is for generating revision history or release notes by collecting GitHub PRs and Azure DevOps work items associated with a product release. It guides the AI to analyze PR metadata, branches, epics, features, stories, bugs, and related items to produce a structured changelog describing key improvements, fixes, and updates for the release.
+- name: product_status_report
+  file: product_status_report.md 
+  description: Use this spec when the user wants to generate a product status report that summarizes the current state of a product or release. The report should include feature progress, completion percentages, dependencies, bugs, risks, engineering health, and next steps, using data from GitHub, Azure DevOps, or other project sources. Choose this spec when the goal is to create a clear, structured, PM-style status update for stakeholders.
