@@ -2,61 +2,60 @@
 
 An MCP (Model Context Protocol) server for fetching PMAgent specifications.
 
-## Starting the MCP Server Locally
+## What does this extension do?
 
-If you need to run the server locally for development or testing:
+This VS Code / Cursor extension **automatically registers the PMAgent MCP server** for you.
 
-1. Navigate to the `src` directory:
-   ```bash
-   cd src
-   ```
+Instead of manually configuring JSON files or connection strings, simply installing this extension will add the PMAgent server to your MCP configuration, making tools like `fetch_spec` immediately available to your AI assistant.
 
-2. Setup virtual env
-   ```bash
-   python -m venv .venv 
-   .\.venv\Scripts\activate
-   ```
+## Installation
 
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+The extension is available on the **Visual Studio Marketplace**.
 
-4. Start the server:
-   ```bash
-   python server.py
-   ```
+1.  Open the **Extensions** view in VS Code or Cursor (`Cmd+Shift+X` or `Ctrl+Shift+X`).
+2.  Search for **"PMAgent Spec MCP"**.
+3.  Click **Install**.
 
-The server will start on `http://localhost:8100` and be accessible via SSE.
+That's it! The extension will automatically register the server connection. You can check your Output panel ("PMAgent MCP" channel) to see the confirmation.
 
-## VSCode Configuration
+## Configuration
 
-To connect to this MCP server in VSCode with Cursor or other MCP-compatible editors via SSE:
+By default, the extension connects to the remote Azure-hosted server. You can change this URL (e.g., for local development) in the extension settings:
 
-1. Open your VSCode settings (or Cursor settings)
-2. Add the following configuration to your settings.json:
+1.  Open **Settings** (`Cmd+,` or `Ctrl+,`).
+2.  Search for **"PMAgent"**.
+3.  Update the **Server Url**.
+    *   Remote (Default): `https://.../sse`
+    *   Local: `http://localhost:8100/sse`
 
-```json
-{
-  "mcp.servers": {
-    "spec-fetcher": {
-      "type": "sse",
-		  "url": "http://localhost:8100/sse"
-    }
-  }
-}
-```
+## Local Development
 
-3. Restart VSCode/Cursor for the changes to take effect.
+If you want to run the server locally and test changes:
 
-The server should already be running and accessible via SSE on port 8100. You could also use VS Code command `Developer: Reload Window` to make sure your changes take effect.
+1.  **Install Dependencies**:
+    ```bash
+    cd src
+    pip install -r requirements.txt
+    ```
 
-4. Add other MCP Servers 
+2.  **Start the Server**:
+    ```bash
+    python server.py
+    ```
+    The server will listen on `http://0.0.0.0:8100`.
 
-- [GitHub MCP Server](https://github.com/github/github-mcp-server)
+3.  **Connect Extension**:
+    Update the extension setting (as above) to `http://localhost:8100/sse` and reload the window.
+
+## Deployment
+
+This repository uses GitHub Actions for Continuous Deployment.
+
+*   **Trigger**: Pushes to the `main` branch.
+*   **Action**: Builds the Docker image and deploys it to Azure Container Apps.
+*   **Result**: The remote MCP server is automatically updated with the latest code and specs.
 
 ## Available Tools
 
-- `content_generation_best_practice()` - Provides the best practice for generating content based on specifications.
-- `list_specs()` - List all available specifications from the index
-- `fetch_spec(name: str)` - Fetch the content of a specification by its name
+-   `list_specs()` - List all available specifications from the index.
+-   `fetch_spec(name: str)` - Fetch the content of a specification by its name.

@@ -135,5 +135,4 @@ def fetch_spec(name: str) -> str:
         return f"Error fetching spec: {str(e)}"
 
 if __name__ == "__main__":
-    uvicorn.run(mcp.sse_app(), port=8100)
-
+    uvicorn.run(mcp.sse_app(), host="0.0.0.0", port=8100)
