@@ -2,49 +2,49 @@
 
 An MCP (Model Context Protocol) server for fetching PMAgent specifications.
 
-## Starting the MCP Server Locally
+## Quick Start
 
-If you need to run the server locally for development or testing:
+1.  **Install the Extension**: Install the `PMAgent Spec MCP` extension in VS Code or Cursor.
+2.  **Ready to Use**: The extension automatically configures your MCP settings to connect to the remote production server. You can immediately start using tools like `list_specs()` and `fetch_spec()`.
 
-1. Navigate to the `src` directory:
-   ```bash
-   cd src
-   ```
+## Configuration
 
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+By default, the extension connects to the remote Azure-hosted server. You can change this URL (e.g., for local development) in the extension settings:
 
-3. Start the server:
-   ```bash
-   python server.py
-   ```
+1.  Open **Settings** (`Cmd+,` or `Ctrl+,`).
+2.  Search for **"PMAgent"**.
+3.  Update the **Server Url**.
+    *   Remote (Default): `https://.../sse`
+    *   Local: `http://localhost:8100/sse`
 
-The server will start on `http://localhost:8100` and be accessible via SSE.
+## Local Development
 
-## VSCode Configuration
+If you want to run the server locally and test changes:
 
-To connect to this MCP server in VSCode with Cursor or other MCP-compatible editors via SSE:
+1.  **Install Dependencies**:
+    ```bash
+    cd src
+    pip install -r requirements.txt
+    ```
 
-1. Open your VSCode settings (or Cursor settings)
-2. Add the following configuration to your settings.json:
+2.  **Start the Server**:
+    ```bash
+    python server.py
+    ```
+    The server will listen on `http://0.0.0.0:8100`.
 
-```json
-{
-  "mcp.servers": {
-    "spec-fetcher": {
-      "url": "http://localhost:8100"
-    }
-  }
-}
-```
+3.  **Connect Extension**:
+    Update the extension setting (as above) to `http://localhost:8100/sse` and reload the window.
 
-3. Restart VSCode/Cursor for the changes to take effect.
+## Deployment
 
-The server should already be running and accessible via SSE on port 8100.
+This repository uses GitHub Actions for Continuous Deployment.
+
+*   **Trigger**: Pushes to the `main` branch.
+*   **Action**: Builds the Docker image and deploys it to Azure Container Apps.
+*   **Result**: The remote MCP server is automatically updated with the latest code and specs.
 
 ## Available Tools
 
-- `list_specs()` - List all available specifications from the index
-- `fetch_spec(name: str)` - Fetch the content of a specification by its name
+-   `list_specs()` - List all available specifications from the index.
+-   `fetch_spec(name: str)` - Fetch the content of a specification by its name.

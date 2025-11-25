@@ -20,7 +20,7 @@
       "properties": {
         "pmagentSpecMcp.serverUrl": {
           "type": "string",
-          "default": "http://localhost:8080/mcp",
+          "default": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/sse",
           "description": "URL of the PMAgent Spec MCP server"
         }
       }

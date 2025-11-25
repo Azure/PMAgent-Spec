@@ -9,7 +9,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Get the MCP server URL from our extension's configuration
     const config = vscode.workspace.getConfiguration('pmagentSpecMcp');
-    const serverUrl = config.get<string>('serverUrl', 'http://localhost:8080/mcp');
+    const serverUrl = config.get<string>('serverUrl');
+    if (!serverUrl) {
+        outputChannel.appendLine('Error: No serverUrl configured.');
+        return;
+    }
     outputChannel.appendLine(`Read configuration serverUrl: ${serverUrl}`);
 
     // Register via settings.json (Stable API)
@@ -21,8 +25,10 @@ export function activate(context: vscode.ExtensionContext) {
             if (e.affectsConfiguration('pmagentSpecMcp.serverUrl')) {
                 outputChannel.appendLine('Configuration changed, updating settings...');
                 const newUrl = vscode.workspace.getConfiguration('pmagentSpecMcp')
-                    .get<string>('serverUrl', 'http://localhost:8080/mcp');
-                updateMcpSettings(newUrl);
+                    .get<string>('serverUrl');
+                if (newUrl) {
+                    updateMcpSettings(newUrl);
+                }
             }
         })
     );
