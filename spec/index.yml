@@ -7,3 +7,6 @@
 - name: product_status_report
   file: product_status_report.md 
   description: Use this spec when the user wants to generate a product status report that summarizes the current state of a product or release. The report should include feature progress, completion percentages, dependencies, bugs, risks, engineering health, and next steps, using data from GitHub, Azure DevOps, or other project sources. Choose this spec when the goal is to create a clear, structured, PM-style status update for stakeholders.
+- name: okr_report
+  file: okr_report.md
+  description: This spec is for generating OKR (Objectives and Key Results) performance reports for SignalR Service and Web PubSub Service. It guides the AI to execute predefined KQL queries to collect OKR metrics and supporting operational data, then analyze achievement rates, extract learnings, identify contributing factors, and provide strategic insights and recommendations. Use this spec when creating quarterly business reviews or OKR performance analysis reports.
