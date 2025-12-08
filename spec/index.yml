@@ -10,3 +10,6 @@
 - name: okr_report
   file: okr_report.md
   description: This spec is for generating OKR (Objectives and Key Results) performance reports for SignalR Service and Web PubSub Service. It guides the AI to execute predefined KQL queries to collect OKR metrics and supporting operational data, then analyze achievement rates, extract learnings, identify contributing factors, and provide strategic insights and recommendations. Use this spec when creating quarterly business reviews or OKR performance analysis reports.
+- name: monday_minutes
+  file: monday_minutes.md
+  description: This spec is for generating Monday Minutes update for a team or project
