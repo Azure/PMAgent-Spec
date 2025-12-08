@@ -1,7 +1,10 @@
+import json
 import os
-import yaml
+from typing import Optional
+
 import requests
 import uvicorn
+import yaml
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
@@ -11,10 +14,35 @@ mcp = FastMCP("Spec Fetcher")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(BASE_DIR, "../spec")
 PROMPT_DIR = os.path.join(DOCS_DIR, "../prompts")
+TOOL_SPEC_DIR = os.path.join(BASE_DIR, "../tool_specs")
 
 INDEX_FILE = os.path.join(DOCS_DIR, "index.yml")
 PROMPT_FILE = os.path.join(PROMPT_DIR, "system_prompts.md")
+TOOL_MANIFEST_FILE = os.path.join(TOOL_SPEC_DIR, "manifest.yml")
 REPO_BASE_URL = "https://raw.githubusercontent.com/Azure/PMAgent-Spec/main"
+
+
+def _load_tool_manifest():
+    """Load the tool manifest (local preferred, remote fallback)."""
+
+    data = None
+    if os.path.exists(TOOL_MANIFEST_FILE):
+        try:
+            with open(TOOL_MANIFEST_FILE, "r") as f:
+                data = yaml.safe_load(f)
+        except Exception:
+            data = None
+
+    if not data:
+        url = f"{REPO_BASE_URL}/tool_specs/manifest.yml"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                data = yaml.safe_load(response.text)
+        except Exception:
+            pass
+
+    return data
 
 @mcp.tool()
 def content_generation_best_practice() -> str:
@@ -76,6 +104,84 @@ def list_specs() -> str:
         return result
     except Exception as e:
         return f"Error reading index: {str(e)}"
+
+
+def _lookup_tool_entry(manifest: dict, name: str) -> Optional[dict]:
+    for tool in manifest.get("tools", []):
+        if tool.get("name") == name:
+            return tool
+    return None
+
+
+@mcp.tool()
+def get_tool_manifest(name: Optional[str] = None) -> str:
+    """Return machine-readable metadata describing reusable tool specs.
+
+    Use this to understand which MCP servers/toolsets (GitHub, Azure DevOps, etc.)
+    are documented, along with their capabilities, fallback plans, and example
+    sequences. Hosts should call this before planning cross-server automation.
+
+    Args:
+        name: Optional tool spec name. When omitted, returns the entire manifest.
+    """
+
+    manifest = _load_tool_manifest()
+
+    if not manifest:
+        return "Error: Could not load tool manifest (local or remote)."
+
+    if name:
+        entry = _lookup_tool_entry(manifest, name)
+        if entry:
+            return json.dumps(entry, indent=2)
+        return f"Error: Tool spec '{name}' not found in manifest."
+
+    return json.dumps(manifest, indent=2)
+
+
+@mcp.tool()
+def fetch_tool_spec(name: str) -> str:
+    """Fetch the markdown tool spec referenced by content specs.
+
+    Args:
+        name: Tool spec name from the tool manifest (e.g., 'github_mcp').
+    """
+
+    manifest = _load_tool_manifest()
+    if not manifest:
+        return "Error: Could not load tool manifest (local or remote)."
+
+    entry = _lookup_tool_entry(manifest, name)
+    if not entry:
+        return f"Error: Tool spec '{name}' not found in manifest."
+
+    spec_file = entry.get("spec_file")
+    if not spec_file:
+        return f"Error: Tool spec '{name}' does not define a spec_file."
+
+    normalized_path = os.path.normpath(spec_file)
+    local_path = os.path.join(TOOL_SPEC_DIR, normalized_path)
+
+    if os.path.exists(local_path):
+        try:
+            with open(local_path, "r") as f:
+                return f.read()
+        except Exception:
+            pass
+
+    url = f"{REPO_BASE_URL}/tool_specs/{normalized_path}"
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return response.text
+        if response.status_code == 404:
+            return (
+                f"Error: Tool spec file '{normalized_path}' not found locally or remotely (404).\n"
+                f"URL: {url}"
+            )
+        return f"Error: Failed to fetch tool spec. Status code: {response.status_code}"
+    except Exception as exc:
+        return f"Error fetching tool spec: {str(exc)}"
 
 @mcp.tool()
 def fetch_spec(name: str) -> str:

@@ -60,7 +60,43 @@ Inputs may come from:
 
 ---
 
-## 5. Section Structure
+## 5. Data Requirements
+Detail the structured data the agent must gather (beyond user inputs) before writing.
+
+For each requirement include:
+- **Name**: Short identifier for the signal (e.g., `merged_prs_last_week`).
+- **Description**: What insight it provides and why it matters for the spec.
+- **Source Preference**: Which MCP server/toolset should be used (e.g., `GitHub MCP – pull_requests`).
+- **Filters**: Time windows, labels, states, or repo scopes to apply.
+- **Fields Needed**: Exact attributes (title, number, merged_at, labels, reviewers, etc.).
+- **Update cadence**: How fresh the data must be.
+
+---
+
+## 6. Tool Spec References
+List which reusable **tool specs** (stored under `tool_specs/` and surfaced via `get_tool_manifest` / `fetch_tool_spec`) this content spec depends on.
+
+For each reference include:
+- **Tool spec name** (e.g., `github_mcp`, `azure_devops_mcp`).
+- **Purpose** – why this tool spec is relevant (what data requirements it satisfies).
+- **Usage note** – instruct the host to load the tool spec (machine-readable + markdown) before planning automation.
+
+Do **not** inline server/tool-call details here. Those belong in the tool spec so that multiple content specs can share the same automation guidance.
+
+---
+
+## 7. Fallback Plan
+Explain how to proceed when the recommended MCP server/tool call is unavailable, errors out, or returns insufficient data.
+
+Outline:
+- Detection logic (e.g., `github` server missing, tool not in `available_tools`, response empty).
+- Alternative MCP servers/tools, if any.
+- Exact questions to ask the user to manually provide the missing signals.
+- Minimal data needed from the user to continue.
+
+---
+
+## 8. Section Structure
 Define the exact sections and structure of the output.
 
 ### Example Structure:
@@ -79,7 +115,7 @@ Each section MUST be generated exactly as structured here.
 
 ---
 
-## 6. Detailed Section Requirements
+## 9. Detailed Section Requirements
 ### Section: <Section Name>
 - Objective:
 - Expected length:
@@ -93,7 +129,7 @@ Each section MUST be generated exactly as structured here.
 
 ---
 
-## 7. Task Planning Rules for Agent
+## 10. Task Planning Rules for Agent
 For this spec, the agent must do the following tasks:
 1. Identify missing inputs  
 2. For each missing input, choose a tool or ask user  
@@ -105,17 +141,7 @@ For this spec, the agent must do the following tasks:
 
 ---
 
-## 8. Required Tools (MCP)
-List tools to use and what they provide:
-- GitHub: read files, commit history, repo content  
-- SharePoint: access documents and folders  
-- SQL DB: retrieve metrics or logs  
-- Web Search: background research  
-- Custom tools: …
-
----
-
-## 9. Quality Checklist
+## 11. Quality Checklist
 The final content MUST satisfy all criteria:
 
 ### Structure
@@ -138,7 +164,7 @@ If any criteria fail → revise before final output.
 
 ---
 
-## 10. Final Output Format
+## 12. Final Output Format
 Specify how the final output must be delivered:
 - Markdown template  
 - JSON schema  

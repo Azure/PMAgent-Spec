@@ -71,6 +71,20 @@ This repository uses GitHub Actions for Continuous Deployment.
 -   `content_generation_best_practice()` - Learn the best practice of content generation.
 -   `list_specs()` - List all available specifications from the index.
 -   `fetch_spec(name: str)` - Fetch the content of a specification by its name.
+-   `get_tool_manifest(name?: str)` - Return machine-readable metadata for reusable tool specs (e.g., GitHub MCP, Azure DevOps MCP) including capabilities, required toolsets, fallback prompts, and example sequences.
+-   `fetch_tool_spec(name: str)` - Fetch the markdown instructions for a specific tool spec referenced by content specs.
+
+## Tool Specs & GitHub Copilot Flow
+
+- Tool specs live under `tool_specs/` with a manifest served via `get_tool_manifest`.
+- Each entry (starting with `github_mcp`) enumerates:
+  - Required toolsets and discovery helpers (e.g., GitHub MCP `pull_requests`, `issues`, `projects`)
+  - Capabilities (merged PRs, blockers, roadmap items) with recommended MCP tool calls
+  - Example call sequences and fallback prompts when telemetry is unavailable
+- Inside GitHub Copilot, the host can now:
+  1. Call `list_specs` / `fetch_spec('monday_minutes')` for the narrative structure.
+  2. Call `get_tool_manifest('github_mcp')` (and optionally `fetch_tool_spec('github_mcp')`) to learn exactly how to gather GitHub telemetry.
+  3. Use the GitHub MCP server to collect merged PRs, blockers, and upcoming project items before drafting the update per the spec.
 
 ## Useful MCP Servers 
 
