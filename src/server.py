@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Optional
 
@@ -18,31 +17,49 @@ TOOL_SPEC_DIR = os.path.join(BASE_DIR, "../tool_specs")
 
 INDEX_FILE = os.path.join(DOCS_DIR, "index.yml")
 PROMPT_FILE = os.path.join(PROMPT_DIR, "system_prompts.md")
-TOOL_MANIFEST_FILE = os.path.join(TOOL_SPEC_DIR, "manifest.yml")
 REPO_BASE_URL = "https://raw.githubusercontent.com/Azure/PMAgent-Spec/main"
 
 
-def _load_tool_manifest():
-    """Load the tool manifest (local preferred, remote fallback)."""
+def _tool_spec_candidates(name: str):
+    """Return possible filenames for the requested tool spec."""
+    base = name.strip()
+    return [f"{base}.yml", f"{base}.yaml"]
 
-    data = None
-    if os.path.exists(TOOL_MANIFEST_FILE):
-        try:
-            with open(TOOL_MANIFEST_FILE, "r") as f:
-                data = yaml.safe_load(f)
-        except Exception:
-            data = None
 
-    if not data:
-        url = f"{REPO_BASE_URL}/tool_specs/manifest.yml"
+def _read_tool_spec_text(name: str) -> Optional[str]:
+    """Load a tool spec file (local preferred, remote fallback)."""
+
+    for candidate in _tool_spec_candidates(name):
+        local_path = os.path.join(TOOL_SPEC_DIR, candidate)
+        if os.path.exists(local_path):
+            try:
+                with open(local_path, "r") as f:
+                    return f.read()
+            except Exception:
+                pass
+
+        url = f"{REPO_BASE_URL}/tool_specs/{candidate}"
         try:
             response = requests.get(url)
             if response.status_code == 200:
-                data = yaml.safe_load(response.text)
+                return response.text
         except Exception:
             pass
 
-    return data
+    return None
+
+
+def _list_available_tool_specs():
+    """List tool spec names discovered locally."""
+
+    if not os.path.isdir(TOOL_SPEC_DIR):
+        return []
+
+    names = []
+    for filename in os.listdir(TOOL_SPEC_DIR):
+        if filename.lower().endswith((".yml", ".yaml")):
+            names.append(os.path.splitext(filename)[0])
+    return sorted(set(names))
 
 @mcp.tool()
 def content_generation_best_practice() -> str:
@@ -106,82 +123,22 @@ def list_specs() -> str:
         return f"Error reading index: {str(e)}"
 
 
-def _lookup_tool_entry(manifest: dict, name: str) -> Optional[dict]:
-    for tool in manifest.get("tools", []):
-        if tool.get("name") == name:
-            return tool
-    return None
-
-
 @mcp.tool()
 def get_tool_manifest(name: Optional[str] = None) -> str:
-    """Return machine-readable metadata describing reusable tool specs.
-
-    Use this to understand which MCP servers/toolsets (GitHub, Azure DevOps, etc.)
-    are documented, along with their capabilities, fallback plans, and example
-    sequences. Hosts should call this before planning cross-server automation.
-
-    Args:
-        name: Optional tool spec name. When omitted, returns the entire manifest.
-    """
-
-    manifest = _load_tool_manifest()
-
-    if not manifest:
-        return "Error: Could not load tool manifest (local or remote)."
+    """Return the raw YAML for the requested tool spec, or list available specs."""
 
     if name:
-        entry = _lookup_tool_entry(manifest, name)
-        if entry:
-            return json.dumps(entry, indent=2)
-        return f"Error: Tool spec '{name}' not found in manifest."
+        text = _read_tool_spec_text(name)
+        if text:
+            return text
+        return f"Error: Tool spec '{name}' not found (local or remote)."
 
-    return json.dumps(manifest, indent=2)
+    specs = _list_available_tool_specs()
+    if not specs:
+        return "Error: No tool specs found (local or remote)."
 
-
-@mcp.tool()
-def fetch_tool_spec(name: str) -> str:
-    """Fetch the markdown tool spec referenced by content specs.
-
-    Args:
-        name: Tool spec name from the tool manifest (e.g., 'github_mcp').
-    """
-
-    manifest = _load_tool_manifest()
-    if not manifest:
-        return "Error: Could not load tool manifest (local or remote)."
-
-    entry = _lookup_tool_entry(manifest, name)
-    if not entry:
-        return f"Error: Tool spec '{name}' not found in manifest."
-
-    spec_file = entry.get("spec_file")
-    if not spec_file:
-        return f"Error: Tool spec '{name}' does not define a spec_file."
-
-    normalized_path = os.path.normpath(spec_file)
-    local_path = os.path.join(TOOL_SPEC_DIR, normalized_path)
-
-    if os.path.exists(local_path):
-        try:
-            with open(local_path, "r") as f:
-                return f.read()
-        except Exception:
-            pass
-
-    url = f"{REPO_BASE_URL}/tool_specs/{normalized_path}"
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            return response.text
-        if response.status_code == 404:
-            return (
-                f"Error: Tool spec file '{normalized_path}' not found locally or remotely (404).\n"
-                f"URL: {url}"
-            )
-        return f"Error: Failed to fetch tool spec. Status code: {response.status_code}"
-    except Exception as exc:
-        return f"Error fetching tool spec: {str(exc)}"
+    joined = "\n".join(f"- {spec_name}" for spec_name in specs)
+    return f"Available tool specs:\n{joined}"
 
 @mcp.tool()
 def fetch_spec(name: str) -> str:

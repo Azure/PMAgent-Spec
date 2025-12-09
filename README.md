@@ -71,20 +71,26 @@ This repository uses GitHub Actions for Continuous Deployment.
 -   `content_generation_best_practice()` - Learn the best practice of content generation.
 -   `list_specs()` - List all available specifications from the index.
 -   `fetch_spec(name: str)` - Fetch the content of a specification by its name.
--   `get_tool_manifest(name?: str)` - Return machine-readable metadata for reusable tool specs (e.g., GitHub MCP, Azure DevOps MCP) including capabilities, required toolsets, fallback prompts, and example sequences.
--   `fetch_tool_spec(name: str)` - Fetch the markdown instructions for a specific tool spec referenced by content specs.
+-   `get_tool_manifest(name?: str)` - Return tool spec YAML (when a `name` is provided) or list all tool specs discovered under `tool_specs/`.
 
 ## Tool Specs & GitHub Copilot Flow
 
-- Tool specs live under `tool_specs/` with a manifest served via `get_tool_manifest`.
-- Each entry (starting with `github_mcp`) enumerates:
+- Each tool spec is a single YAML file under `tool_specs/` (e.g., `tool_specs/github.yml`) exposed through `get_tool_manifest`.
+- Every entry enumerates:
   - Required toolsets and discovery helpers (e.g., GitHub MCP `pull_requests`, `issues`, `projects`)
-  - Capabilities (merged PRs, blockers, roadmap items) with recommended MCP tool calls
+  - Capability helpers (merged PRs, blockers, roadmap items) with recommended MCP tool calls
   - Example call sequences and fallback prompts when telemetry is unavailable
+- Capability helpers are additive; you can still use any other MCP tool if it better satisfies the spec.
 - Inside GitHub Copilot, the host can now:
   1. Call `list_specs` / `fetch_spec('monday_minutes')` for the narrative structure.
-  2. Call `get_tool_manifest('github_mcp')` (and optionally `fetch_tool_spec('github_mcp')`) to learn exactly how to gather GitHub telemetry.
+  2. Call `get_tool_manifest('github')` to load the YAML describing how to gather GitHub telemetry (capabilities, required toolsets, fallback).
   3. Use the GitHub MCP server to collect merged PRs, blockers, and upcoming project items before drafting the update per the spec.
+
+### Adding or Referencing Tool Specs
+
+1. Create `tool_specs/<tool>.yml` following the same schema (metadata, `toolsets`, `capabilities`, `fallback`, `example_sequences`).
+2. Update any content spec’s **Tool Dependencies** section to list the tool name (e.g., `- github`). No additional metadata is required inside the spec.
+3. The system prompt instructs agents to call `get_tool_manifest('<tool>')` whenever a dependency is present, so no further server changes are needed.
 
 ## Useful MCP Servers 
 

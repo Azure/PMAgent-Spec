@@ -73,15 +73,22 @@ For each requirement include:
 
 ---
 
-## 6. Tool Spec References
-List which reusable **tool specs** (stored under `tool_specs/` and surfaced via `get_tool_manifest` / `fetch_tool_spec`) this content spec depends on.
+## 6. Tool Dependencies
+List the tool spec filenames (matching `tool_specs/<name>.yml`) that this spec expects the host to load before planning.
 
-For each reference include:
-- **Tool spec name** (e.g., `github_mcp`, `azure_devops_mcp`).
-- **Purpose** – why this tool spec is relevant (what data requirements it satisfies).
-- **Usage note** – instruct the host to load the tool spec (machine-readable + markdown) before planning automation.
+Format the section as:
 
-Do **not** inline server/tool-call details here. Those belong in the tool spec so that multiple content specs can share the same automation guidance.
+```
+Tool Dependencies:
+- github
+- azure_devops (optional)
+```
+
+Guidelines:
+- Tool names must match files under `tool_specs/<tool>.yml`.
+- Keep the list limited to tool names; do **not** restate capability details.
+- Agents must call `get_tool_manifest('<tool>')` for each required tool to inspect capabilities, helpers, and fallbacks.
+- If a dependency is optional, label it `(optional)` in the list.
 
 ---
 
