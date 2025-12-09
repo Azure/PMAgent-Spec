@@ -96,3 +96,9 @@ Current extension behavior: auto-register PMAgent Spec MCP at startup by editing
 ---
 
 This design keeps the PMAgent Spec MCP focused, enables drop-in MCP composability, and gives Monday Minutes (and future specs) the guidance they need to leverage users’ existing GitHub/ADO MCP deployments without embedding custom logic.
+
+## 9. Latest Updates (Dec 2024)
+
+- Added `tool_specs/azure_devops.yml`, mirroring the GitHub manifest but mapped to the [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) domains (core, repositories, work, work-items, pipelines, search). Each Monday Minutes capability ID now has an Azure DevOps call pattern + fallback so hosts can satisfy signals even when GitHub is not the source of truth.
+- Updated `spec/monday_minutes.md` so the agent inspects the user’s prompt for a telemetry preference. GitHub remains the default, but if the user asks for Azure DevOps Boards/pipelines (or mentions “ADO”), the agent must load the new manifest via `get_tool_manifest('azure_devops')` and label bullets with their origin when it improves clarity.
+- The Tool Dependencies section now lists both `github` and optional `azure_devops`, plus the Task Planning rules explicitly require a “detect telemetry source” step before running any capability helper. This keeps orchestration deterministic regardless of which MCP servers are available in the host.

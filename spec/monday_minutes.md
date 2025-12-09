@@ -100,6 +100,11 @@ Per team or per sub-area:
 
 Monday Minutes should combine human-provided talking points with live engineering telemetry (see referenced tool specs) before drafting the update:
 
+**Telemetry source selection:**
+
+- If the user’s prompt explicitly asks for Azure DevOps (ADO) data—or references Boards, pipelines, or work items—load the `azure_devops` tool spec instead of (or in addition to) GitHub.
+- When the user wants both sources, run both specs and merge the resulting signals per sub-area, calling out the origin (GitHub vs ADO) when helpful.
+
 ### **5.1 Delivery Signals (Weekly)**
 
 - **`merged_prs_last_week`** – Merged pull requests (state=`merged`) across the team’s tracked repositories during the previous Monday→Sunday window. Capture: title, PR number + URL, author, reviewers, merged_at, labels/tags describing scope, and whether the change shipped externally.
@@ -132,9 +137,10 @@ Document which data sources were used so reviewers know whether the update came 
 ```
 Tool Dependencies:
 - github
+- azure_devops
 ```
 
-Hosts must call `get_tool_manifest('github')` before planning telemetry calls so the agent can ingest the capability helpers, required toolsets, and fallback steps.
+Hosts must call `get_tool_manifest('github')` and/or `get_tool_manifest('azure_devops')` (per the list above) before planning telemetry calls so the agent can ingest the capability helpers, required toolsets, and fallback steps.
 
 ---
 
@@ -347,14 +353,21 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
 
 1. **Identify the team/group name**
 
-   * Use the user-provided name as `<Group Name>`.
+ * Use the user-provided name as `<Group Name>`.
 
-2. **Identify sub-areas**
+2. **Detect telemetry source**
 
-   * Either use explicit input (`Direct Models`, `Efficiency`, etc.)
-   * Or, if only one block is provided, treat the whole team as a single sub-area with a meaningful name.
+  * Read the latest user prompt for explicit instructions (e.g., `source=ado`, “use Azure DevOps Boards”, “pull GitHub activity”).
+  * Default to GitHub when the source is unspecified; call `get_tool_manifest('github')` to inspect capabilities before planning tool calls.
+  * When the user requests Azure DevOps data (or GitHub telemetry is unavailable), also call `get_tool_manifest('azure_devops')` and map each capability (`merged_prs_last_week`, etc.) to the Azure DevOps tools.
+  * If both sources are requested, gather data from each and label notable bullets with the source when it aids clarity.
 
-3. **For each sub-area:**
+3. **Identify sub-areas**
+
+  * Either use explicit input (`Direct Models`, `Efficiency`, etc.)
+  * Or, if only one block is provided, treat the whole team as a single sub-area with a meaningful name.
+
+4. **For each sub-area:**
 
    * Determine DRI from inputs.
    * Summarize into a 1–3 sentence TLDR.
@@ -362,12 +375,12 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
    * Extract 0–5 Risks + Blockers; if none exist, emit `None`.
    * Extract 2–6 Upcoming items.
 
-4. **Normalize:**
+5. **Normalize:**
 
    * Use consistent heading levels and icon headings (`📝`, `🎯`, `⚠️`, `🔜`).
    * Remove duplicated statements between TLDR and Highlights.
 
-5. **Self-review:**
+6. **Self-review:**
 
    * Check that every sub-area has **DRI, TLDR, Highlights, Risks, Upcoming**.
    * Ensure risks are real and grounded in the inputs, not invented.

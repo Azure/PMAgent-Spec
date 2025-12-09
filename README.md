@@ -89,10 +89,34 @@ This repository uses GitHub Actions for Continuous Deployment.
 ### Adding or Referencing Tool Specs
 
 1. Create `tool_specs/<tool>.yml` following the same schema (metadata, `toolsets`, `capabilities`, `fallback`, `example_sequences`).
-2. Update any content spec’s **Tool Dependencies** section to list the tool name (e.g., `- github`). No additional metadata is required inside the spec.
+2. Update any content spec's **Tool Dependencies** section to list the tool name (e.g., `- github`). No additional metadata is required inside the spec.
 3. The system prompt instructs agents to call `get_tool_manifest('<tool>')` whenever a dependency is present, so no further server changes are needed.
+
+### Azure DevOps Telemetry
+
+- `tool_specs/azure_devops.yml` mirrors the GitHub manifest but targets the [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) server. Enable the `core`, `repositories`, `work`, and `work-items` domains (plus `pipelines`/`search` when release data is needed) before invoking its capability helpers.
+- `spec/monday_minutes.md` now inspects the user's prompt for a telemetry preference: GitHub is the default source, but if the user asks for Azure DevOps (Boards, pipelines, work items, etc.), the agent must call `get_tool_manifest('azure_devops')` and satisfy each capability (`merged_prs_last_week`, `open_blocker_issues`, ...) with the ADO tools.
+- When a user wants mixed telemetry, load both manifests and merge the resulting signals; annotate Highlights/Risks with the source when it aids reviewers.
 
 ## Useful MCP Servers 
 
 - [GitHub MCP Server](https://github.com/github/github-mcp-server)
 - [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)
+
+## GitHub Copilot agent template
+
+GitHub Copilot and VS Code can preload behavior through `.agent.md` files stored in `.github/agents/` ([VS Code docs](https://code.visualstudio.com/docs/copilot/customization/custom-agents), [GitHub docs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-custom-agents)). To keep PMAgent front-and-center even when users have many MCP servers installed, this repo now ships a ready-to-copy template under `copilot-agent-template/.github/agents/pmagent-spec.agent.md`.
+
+The template:
+
+- Pins Copilot to the `pmagent-spec` MCP server tools so spec discovery (`list_specs`, `fetch_spec`, `get_tool_manifest`) always comes from our source of truth.
+- Forces every run to call `content_generation_best_practice` first, mirror the selected spec word-for-word, and re-check the completion checklist before answering.
+- Reminds Copilot to load any dependent tool manifests (for example GitHub or Azure DevOps) listed inside the spec and to cite missing telemetry.
+
+To use it in another repository:
+
+1. Ensure the PMAgent MCP server is available to your users (install the VS Code extension or add the server to `~/.mcp`).
+2. Copy the `.github/agents` folder from `copilot-agent-template` into the target repository’s root (merge with the existing folder if needed) and commit it.
+3. In Copilot Chat, open the agent dropdown, pick **PMAgent Spec Orchestrator**, and start prompting. The template shows up automatically anywhere `.agent.md` files are supported.
+
+Customize the file’s YAML frontmatter if you need a different default model or additional MCP tools; the instructions section can also be extended with team-specific formatting rules.

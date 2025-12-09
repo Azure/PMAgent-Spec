@@ -125,7 +125,10 @@ def list_specs() -> str:
 
 @mcp.tool()
 def get_tool_manifest(name: Optional[str] = None) -> str:
-    """Return the raw YAML for the requested tool spec, or list available specs."""
+    """Get a tool helpers that defined in a specific spec. 
+    
+    If spec have tool dependencies, use this after fetch_spec to get tools usage helper.
+    If no name is provided, list all available tool specs."""
 
     if name:
         text = _read_tool_spec_text(name)
