@@ -41,7 +41,7 @@ Goal: design an architecture where the PMAgent Spec MCP remains lightweight (ser
 
 1. `content_generation_best_practice` (PMAgent Spec MCP)
 2. `list_specs` / `fetch_spec('monday_minutes')`
-3. Inspect spec section “Required Inputs” + “Recommended MCP tools” (new spec section) → detect need for GitHub/Azure data
+3. Inspect spec section “Required Inputs” + the machine-readable **Tool Dependencies** block → detect which external MCP capabilities are required
 4. Call external MCP server tool, e.g., `github.list_recent_activity`, `ado.fetch_work_items`
 5. Merge inputs → craft final Monday Minutes output per spec
 
@@ -51,7 +51,7 @@ Goal: design an architecture where the PMAgent Spec MCP remains lightweight (ser
 |------------|-------------|
 | Spec catalog | Serve curated specs (Markdown) via `list_specs` / `fetch_spec`.
 | Prompt best practices | Provide system prompts describing workflow, tool selection, validation.
-| Tool specs catalog | (New) Provide a machine-readable manifest of **tool specs** (GitHub MCP, Azure DevOps MCP, etc.) describing capabilities, required toolsets, and orchestration examples. Expose them as MCP tools (`get_tool_manifest`, `fetch_tool_spec`) so hosts can load metadata + markdown on demand. Functional specs reference these tool specs by name instead of embedding per-spec instructions.
+| Tool specs catalog | (New) Serve per-tool YAML files under `tool_specs/<tool>.yml` that map spec signals to MCP calls (capabilities, fields, discovery helpers, fallback). `get_tool_manifest('<tool>')` simply returns the raw YAML so hosts (and LLMs) can read it directly; no JSON manifest or secondary Markdown is maintained.
 | Versioning | Report spec versions so clients can detect updates.
 
 No other outbound network requests should exist in this server. Any domain integration happens elsewhere.
@@ -61,10 +61,14 @@ No other outbound network requests should exist in this server. Any domain integ
 Add the following sections to each spec (starting with Monday Minutes):
 
 1. **Data Requirements** – enumerate structured inputs (GitHub PRs, issues, ADO work items, metrics dashboards).
-2. **Tool Spec References** – list the external tool specs (e.g., `github_mcp`, `azure_devops_mcp`) required for automation. Each entry only contains a short rationale + spec name. The host then loads the dedicated tool spec to see exact toolsets, arguments, and call sequences.
+2. **Tool Dependencies** – A short list that names the required tool specs (e.g., `github`, `azure_devops`). Capability details stay inside the tool spec; the list simply tells the host which YAML files to load.
 3. **Fallback Plan** – instructions for asking the user when tools are unavailable or return insufficient data.
 
-Tool specs live under a new `tool_specs/` directory, have their own machine-readable manifest, and can be reused by any number of content specs. This keeps the PMAgent Spec MCP focused on distribution while allowing GitHub Copilot (or any host) to fetch tool guidance just-in-time.
+Each tool spec is a single YAML file (e.g., `tool_specs/github.yml`) that already includes required toolsets, capability helpers (with recommended call sequences), fallback prompts, and example orchestrations. Eliminating the old `manifest + markdown` split keeps the content machine-first and makes it easier for other orgs to drop in their own MCP mappings without editing the PMAgent server. The capability helpers are advisory overlays—they highlight proven workflows but do not restrict callers from using any other MCP function.
+
+Specs no longer copy capability IDs or call snippets; they only cite the tool name. The `content_creation_best_practice` prompt now reminds agents to call `get_tool_manifest('<tool>')` for every dependency and treat the listed capabilities as guidance (they can still call any other MCP function as needed).
+
+Because every entry is standalone YAML, contributors (or downstream tenants) can add new mappings—`tool_specs/my_github_clone.yml`, `tool_specs/ado.yml`, etc.—without touching the MCP codebase; the server automatically discovers any `*.yml` under `tool_specs/` when responding to `get_tool_manifest`.
 
 ## 6. Extension Story
 
@@ -76,8 +80,8 @@ Current extension behavior: auto-register PMAgent Spec MCP at startup by editing
 
 ## 7. Agent Orchestration Flow (Monday Minutes example)
 
-1. Agent loads Monday Minutes spec → sees required data + references `github_mcp` tool spec.
-2. Agent calls `get_tool_manifest('github_mcp')` (or fetches the markdown tool spec) to learn discovery steps, toolsets, example sequences.
+1. Agent loads Monday Minutes spec → sees required data + the `Tool Dependencies` list naming `github`.
+2. Agent calls `get_tool_manifest('github')` to load the YAML describing discovery steps, toolsets, and example sequences.
 3. Host enumerates available MCP servers and enables the referenced toolsets if available.
 4. If `github.*` tools exist → run queries per **tool spec** guidance.
 5. If not: follow the spec’s fallback prompts and gather data manually.
@@ -92,3 +96,9 @@ Current extension behavior: auto-register PMAgent Spec MCP at startup by editing
 ---
 
 This design keeps the PMAgent Spec MCP focused, enables drop-in MCP composability, and gives Monday Minutes (and future specs) the guidance they need to leverage users’ existing GitHub/ADO MCP deployments without embedding custom logic.
+
+## 9. Latest Updates (Dec 2024)
+
+- Added `tool_specs/azure_devops.yml`, mirroring the GitHub manifest but mapped to the [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) domains (core, repositories, work, work-items, pipelines, search). Each Monday Minutes capability ID now has an Azure DevOps call pattern + fallback so hosts can satisfy signals even when GitHub is not the source of truth.
+- Updated `spec/monday_minutes.md` so the agent inspects the user’s prompt for a telemetry preference. GitHub remains the default, but if the user asks for Azure DevOps Boards/pipelines (or mentions “ADO”), the agent must load the new manifest via `get_tool_manifest('azure_devops')` and label bullets with their origin when it improves clarity.
+- The Tool Dependencies section now lists both `github` and optional `azure_devops`, plus the Task Planning rules explicitly require a “detect telemetry source” step before running any capability helper. This keeps orchestration deterministic regardless of which MCP servers are available in the host.

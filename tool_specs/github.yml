@@ -1,0 +1,186 @@
+name: github
+display_name: "GitHub MCP Telemetry"
+version: 1
+updated: 2024-11-26
+description: >
+  Machine-readable mapping between PMAgent spec signals and GitHub MCP
+  tool calls. Hosts use this file to decide which GitHub capabilities must be
+  enabled, which queries to run, and how to normalize the results before
+  drafting content like Monday Minutes or revision histories.
+
+toolsets:
+  description: >
+    Toolsets that should be enabled on the GitHub MCP server before invoking the
+    capability helpers below.
+  required: [pull_requests, issues, repos, projects]
+  discovery_tools: [list_available_toolsets, get_toolset_tools, enable_toolset]
+
+capabilities:
+  description: >
+    Helper overlays that map PMAgent signals to recommended GitHub MCP calls.
+    Agents may execute additional GitHub tools beyond this list; the entries
+    simply document common workflows and required fields.
+  merged_prs_last_week:
+    description: >
+      Retrieve merged pull requests during the previous Monday→Sunday window.
+    required_fields:
+      - title
+      - number
+      - url
+      - author
+      - reviewers
+      - merged_at
+      - labels
+      - shipped_externally
+    recommended_calls:
+      - tool: list_pull_requests
+        arguments:
+          owner: "<org>"
+          repo: "<repo>"
+          state: closed
+          sort: updated
+          direction: desc
+          perPage: 50
+        post_process: Filter to records with non-null merged_at inside the last 7 days and bucket by spec sub-area.
+      - tool: search_pull_requests
+        arguments:
+          query: "repo:<org>/<repo> is:pr is:merged merged:>=<yyyy-mm-dd>"
+
+  recent_releases_or_tags:
+    description: >
+      Identify releases or tags published during the reporting window so highlights
+      can cite hard launches with URLs.
+    required_fields:
+      - name
+      - tag_name
+      - html_url
+      - published_at
+    recommended_calls:
+      - tool: list_releases
+        arguments:
+          owner: "<org>"
+          repo: "<repo>"
+          perPage: 20
+
+  open_blocker_issues:
+    description: >
+      Retrieve Sev0/Sev1/blocker issues (or PRs) including owner, severity, last update,
+      and mitigation text for risk sections.
+    required_fields:
+      - title
+      - url
+      - owner
+      - severity_label
+      - updated_at
+      - mitigation
+    recommended_calls:
+      - tool: search_issues
+        arguments:
+          query: "org:<org> (label:blocker OR label:risk OR label:\"Sev0\") is:open updated:>=<yyyy-mm-dd>"
+
+  failing_work_items:
+    description: >
+      Surface PRs with failing workflows or pending reviews so risks list current blocks.
+    required_fields:
+      - pull_number
+      - status
+      - failing_check
+      - eta
+    recommended_calls:
+      - tool: pull_request_read
+        arguments:
+          method: get_status
+          owner: "<org>"
+          repo: "<repo>"
+          pullNumber: "<number>"
+
+  project_items_upcoming:
+    description: >
+      Fetch GitHub Project items categorized as Upcoming/Ready/Next to populate the
+      Upcoming section with owner + due date.
+    required_fields:
+      - title
+      - owner
+      - target_date
+      - blockers
+    recommended_calls:
+      - tool: list_project_items
+        arguments:
+          org: "<org>"
+          project_number: "<project #>"
+          query: "status:Upcoming"
+
+  milestone_target_dates:
+    description: >
+      Collect repo milestones due within two weeks so upcoming launch dates stay current.
+    required_fields:
+      - title
+      - due_on
+      - owner
+    recommended_calls:
+      - tool: list_milestones
+        arguments:
+          owner: "<org>"
+          repo: "<repo>"
+          state: open
+
+fallback:
+  description: >
+    Guidance for collecting manual data when GitHub MCP tooling is unavailable
+    or returns empty results.
+  triggers: [github_server_missing, tool_not_available, empty_or_insufficient_results]
+  steps:
+    - action: ask_user
+      prompt: "Share the top merged PRs (title + link + owner) for each sub-area last week."
+    - action: ask_user
+      prompt: "List any Sev0/Sev1 or blocker issues plus mitigations."
+    - action: ask_user
+      prompt: "Provide upcoming launches or milestones with target dates for the next two weeks."
+    - action: document_gap
+      note: "State in the final output that GitHub telemetry was unavailable and data is manual."
+
+example_sequences:
+  description: >
+    Canonical orchestration flows showing how to combine discovery helpers and
+    capability calls during a reporting cycle.
+  - name: github_weekly_rollup
+    description: Discover GitHub MCP capabilities and retrieve telemetry for weekly PM updates.
+    steps:
+      - order: 1
+        tool: mcp.list_tools
+        purpose: Confirm the `github` server is registered in the host session.
+      - order: 2
+        tool: github.list_available_toolsets
+        purpose: Inspect enabled toolsets.
+      - order: 3
+        tool: github.enable_toolset
+        purpose: Enable missing toolsets when dynamic discovery is active.
+        arguments:
+          toolset: pull_requests
+      - order: 4
+        tool: github.enable_toolset
+        purpose: Enable the issues toolset.
+        arguments:
+          toolset: issues
+      - order: 5
+        tool: github.list_pull_requests
+        purpose: Fetch merged PRs for the target repo(s).
+        arguments:
+          owner: "azure"
+          repo: "pmagent-spec"
+          state: closed
+          sort: updated
+          direction: desc
+          perPage: 30
+      - order: 6
+        tool: github.search_issues
+        purpose: Find open blockers labeled `risk`.
+        arguments:
+          query: "repo:azure/pmagent-spec label:risk is:issue is:open updated:>=2024-11-18"
+      - order: 7
+        tool: github.list_project_items
+        purpose: Pull upcoming roadmap items from the shared project board.
+        arguments:
+          org: "azure"
+          project_number: 42
+          query: "status:Upcoming"

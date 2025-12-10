@@ -100,20 +100,25 @@ Per team or per sub-area:
 
 Monday Minutes should combine human-provided talking points with live engineering telemetry (see referenced tool specs) before drafting the update:
 
+**Telemetry source selection:**
+
+- If the user’s prompt explicitly asks for Azure DevOps (ADO) data—or references Boards, pipelines, or work items—load the `azure_devops` tool spec instead of (or in addition to) GitHub.
+- When the user wants both sources, run both specs and merge the resulting signals per sub-area, calling out the origin (GitHub vs ADO) when helpful.
+
 ### **5.1 Delivery Signals (Weekly)**
 
-- **`merged_prs_last_week`** – Merged pull requests (state=`merged`) across the team’s tracked repositories during the previous Monday→Sunday window. Capture: title, PR number + URL, author, reviewers, merged_at, labels/tags describing scope, and whether the change shipped externally. See tool spec `github_mcp` for preferred retrieval steps.
-- **`recent_releases_or_tags`** – Releases or tags published in the same window to highlight hard launches. See tool spec `github_mcp` for the recommended source.
+- **`merged_prs_last_week`** – Merged pull requests (state=`merged`) across the team’s tracked repositories during the previous Monday→Sunday window. Capture: title, PR number + URL, author, reviewers, merged_at, labels/tags describing scope, and whether the change shipped externally.
+- **`recent_releases_or_tags`** – Releases or tags published in the same window to highlight hard launches.
 
 ### **5.2 Risk + Blocker Signals**
 
-- **`open_blocker_issues`** – Open issues/PRs labeled `blocker`, `risk`, or matching the team’s severity labels. Capture title, owner, severity label, last updated timestamp, and explicit unblock actions. See `github_mcp` for concrete queries.
-- **`failing_work_items`** (optional) – Open PRs flagged by reviewers or workflows; summarize failure reason + ETA. See `github_mcp` for workflow inspection guidance.
+- **`open_blocker_issues`** – Open issues/PRs labeled `blocker`, `risk`, or matching the team’s severity labels. Capture title, owner, severity label, last updated timestamp, and explicit unblock actions.
+- **`failing_work_items`** (optional) – Open PRs flagged by reviewers or workflows; summarize failure reason + ETA.
 
 ### **5.3 Upcoming + Planning Signals**
 
-- **`project_items_upcoming`** – Items in program boards (GitHub Projects or equivalents) categorized as `Upcoming`, `Ready`, or `Next`. Capture item title, owner/DRI, target date, and blocking dependencies. See `github_mcp` for project-board collection guidance.
-- **`milestone_target_dates`** – Milestones due within the next 2 weeks for each repo. See `github_mcp` for milestone queries.
+- **`project_items_upcoming`** – Items in program boards (GitHub Projects or equivalents) categorized as `Upcoming`, `Ready`, or `Next`. Capture item title, owner/DRI, target date, and blocking dependencies.
+- **`milestone_target_dates`** – Milestones due within the next 2 weeks for each repo.
 
 ### **5.4 Manual Inputs**
 
@@ -127,13 +132,15 @@ Document which data sources were used so reviewers know whether the update came 
 
 ---
 
-## **6. Tool Spec References**
+## **6. Tool Dependencies**
 
-This spec expects hosts to consult reusable **tool specs** for automation details. For Monday Minutes:
+```
+Tool Dependencies:
+- github
+- azure_devops
+```
 
-- `github_mcp` – Use this tool spec to gather merged PRs, releases, blockers, workflow failures, and roadmap items from the GitHub MCP server. Call `get_tool_manifest('github_mcp')` (machine-readable) and/or `fetch_tool_spec('github_mcp')` (markdown instructions) before planning telemetry calls.
-
-Hosts should apply the referenced tool spec verbatim (discovery steps, toolsets, example sequences) rather than duplicating logic inside this content spec.
+Hosts must call `get_tool_manifest('github')` and/or `get_tool_manifest('azure_devops')` (per the list above) before planning telemetry calls so the agent can ingest the capability helpers, required toolsets, and fallback steps.
 
 ---
 
@@ -141,7 +148,7 @@ Hosts should apply the referenced tool spec verbatim (discovery steps, toolsets,
 
 If a referenced tool spec cannot be satisfied:
 
-1. **Defer to the tool spec fallback** (e.g., `github_mcp` lists detection rules for missing servers/tools).
+1. **Defer to the tool spec fallback** (e.g., the `github` tool spec lists detection rules for missing servers/tools).
 2. **Prompt the user** with focused questions per missing signal, for example:
    - “Please list the top merged PRs (title, link, owners) for each sub-area last week.”
    - “Share any open Sev0/Sev1 risks, the owner, and the mitigation ETA.”
@@ -168,11 +175,13 @@ The output for **one team** MUST follow this structure:
    * Upcoming
    * Optional ships lists
 
+   Use the icon headings exactly as written (`**📝 TLDR**`, `**🎯 Highlights**`, `**⚠️ Risks + Blockers**`, `**🔜 Upcoming**`) so downstream posts render consistently.
+
 ---
 
 ## **9. Detailed Section Requirements**
 
-### **6.1 Group Header**
+### **9.1 Group Header**
 
 **Objective:** Identify which team/area this update belongs to.
 
@@ -184,20 +193,20 @@ The output for **one team** MUST follow this structure:
 **Examples:**
 
 ```markdown
-### Foundry Models & Training
-### GitHub Minutes
-### Agentic DevOps – Azure Developer CLI
+# Foundry Models & Training
+# GitHub Minutes
+# Agentic DevOps – Azure Developer CLI
 ```
 
 ---
 
-### **6.2 Sub-Area Section**
+### **9.2 Sub-Area Section**
 
 Each sub-area under the group follows the same pattern.
 
-#### 6.2.1 Sub-Area Title & DRI
+#### 9.2.1 Sub-Area Title & DRI
 
-* Sub-area heading (level 4):
+* Sub-area heading (level 2):
   `## <Sub-Area Name>`
 
 * DRI line immediately below:
@@ -206,13 +215,13 @@ Each sub-area under the group follows the same pattern.
 **Example:**
 
 ```markdown
-#### Direct Models
+## Direct Models
 DRI: Naomi Moneypenny
 ```
 
 ---
 
-#### 6.2.2 📝 TLDR
+#### 9.2.2 📝 TLDR
 
 **Objective:** Provide a 1–3 sentence summary of the week for this sub-area.
 
@@ -231,7 +240,7 @@ Cohere Embed v4 and Command A launched as Direct models on Azure; gpt-5.2 remain
 
 ---
 
-#### 6.2.3 🎯 Highlights
+#### 9.2.3 🎯 Highlights
 
 **Objective:** List concrete, notable events and outcomes.
 
@@ -258,7 +267,7 @@ Each bullet should:
 
 ---
 
-#### 6.2.4 ⚠️ Risks + Blockers
+#### 9.2.4 ⚠️ Risks + Blockers
 
 **Objective:** Call out material risks and blockers for this sub-area.
 
@@ -292,7 +301,7 @@ or, if no risks:
 
 ---
 
-#### 6.2.5 🔜 Upcoming
+#### 9.2.5 🔜 Upcoming
 
 **Objective:** Show near-term next steps and important dates.
 
@@ -318,7 +327,7 @@ Each bullet should:
 
 ---
 
-#### 6.2.6 Optional: Ships Lists
+#### 9.2.6 Optional: Ships Lists
 
 Some teams (e.g., GitHub) may prefer explicit “ships last week / ships this week” lists inside a sub-area.
 
@@ -344,14 +353,21 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
 
 1. **Identify the team/group name**
 
-   * Use the user-provided name as `<Group Name>`.
+ * Use the user-provided name as `<Group Name>`.
 
-2. **Identify sub-areas**
+2. **Detect telemetry source**
 
-   * Either use explicit input (`Direct Models`, `Efficiency`, etc.)
-   * Or, if only one block is provided, treat the whole team as a single sub-area with a meaningful name.
+  * Read the latest user prompt for explicit instructions (e.g., `source=ado`, “use Azure DevOps Boards”, “pull GitHub activity”).
+  * Default to GitHub when the source is unspecified; call `get_tool_manifest('github')` to inspect capabilities before planning tool calls.
+  * When the user requests Azure DevOps data (or GitHub telemetry is unavailable), also call `get_tool_manifest('azure_devops')` and map each capability (`merged_prs_last_week`, etc.) to the Azure DevOps tools.
+  * If both sources are requested, gather data from each and label notable bullets with the source when it aids clarity.
 
-3. **For each sub-area:**
+3. **Identify sub-areas**
+
+  * Either use explicit input (`Direct Models`, `Efficiency`, etc.)
+  * Or, if only one block is provided, treat the whole team as a single sub-area with a meaningful name.
+
+4. **For each sub-area:**
 
    * Determine DRI from inputs.
    * Summarize into a 1–3 sentence TLDR.
@@ -359,12 +375,12 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
    * Extract 0–5 Risks + Blockers; if none exist, emit `None`.
    * Extract 2–6 Upcoming items.
 
-4. **Normalize:**
+5. **Normalize:**
 
    * Use consistent heading levels and icon headings (`📝`, `🎯`, `⚠️`, `🔜`).
    * Remove duplicated statements between TLDR and Highlights.
 
-5. **Self-review:**
+6. **Self-review:**
 
    * Check that every sub-area has **DRI, TLDR, Highlights, Risks, Upcoming**.
    * Ensure risks are real and grounded in the inputs, not invented.

@@ -1,0 +1,240 @@
+name: azure_devops
+display_name: "Azure DevOps MCP Telemetry"
+version: 1
+updated: 2024-12-04
+description: >
+  Machine-readable mapping between PMAgent spec signals and Azure DevOps MCP
+  tool calls. Hosts load this manifest when the Monday Minutes spec requests
+  Azure DevOps data so agents know which domains to enable, which tools to
+  prefer, and how to fall back to manual collection.
+
+toolsets:
+  description: >
+    The Azure DevOps MCP server groups tools into "domains" that are enabled via
+    `-d <domain>` when registering the server. Load the required domains before
+    planning telemetry calls so the listed tools are available.
+  required: [core, repositories, work, work-items]
+  optional: [pipelines, search]
+  discovery_tools:
+    - mcp.list_tools
+
+capabilities:
+  description: >
+    Capability helpers translate PMAgent telemetry requests into Azure DevOps
+    MCP calls. Agents can execute additional ADO tools if helpful; the entries
+    below simply document proven call patterns and required fields.
+  merged_prs_last_week:
+    description: >
+      Retrieve pull requests completed during the previous Monday-Sunday window
+      across one or more Azure DevOps projects.
+    required_fields:
+      - title
+      - pull_request_id
+      - repository
+      - url
+      - created_by
+      - reviewers
+      - closed_date
+      - tags_or_labels
+      - shipped_externally
+    recommended_calls:
+      - tool: repo_list_pull_requests_by_repo_or_project
+        arguments:
+          project: "<project>"
+          repositoryId: "<repo guid>"
+          status: Completed
+          top: 200
+        post_process: Filter by `closedDate` inside the last 7 days, attach web URL, and bucket by spec sub-area.
+      - tool: repo_get_pull_request_by_id
+        arguments:
+          pullRequestId: "<id>"
+          repositoryId: "<repo guid>"
+        post_process: Enrich with reviewers, completion options, and auto-compute shipped_externally flag from linked work items or tags.
+
+  recent_releases_or_tags:
+    description: >
+      Identify builds/releases that completed in the reporting window so the
+      Highlights section can cite concrete Azure DevOps artifacts.
+    required_fields:
+      - definition_name
+      - build_number
+      - result
+      - finish_time
+      - requested_for
+      - web_url
+    recommended_calls:
+      - tool: pipelines_get_builds
+        arguments:
+          project: "<project>"
+          definitions: [<id>, <id>]
+          minTime: "<iso start of reporting window>"
+          maxTime: "<iso end of reporting window>"
+          branchName: "refs/heads/main"
+        post_process: Filter to `result in (Succeeded, PartiallySucceeded)` and map to release/tag names used in Monday Minutes.
+      - tool: pipelines_list_runs
+        arguments:
+          project: "<project>"
+          pipelineId: <id>
+        post_process: Trim to runs finished inside the reporting window; use this path for YAML pipelines or multi-stage releases when build definitions are not used.
+
+  open_blocker_issues:
+    description: >
+      Surface Sev0/Sev1/Blocked work items (Bugs, Tasks, Impediments) including
+      owner, severity, last update, and mitigation so risks remain current.
+    required_fields:
+      - id
+      - title
+      - url
+      - owner
+      - severity
+      - state
+      - updated_at
+      - mitigation
+    recommended_calls:
+      - tool: search_workitem
+        arguments:
+          searchText: "Blocked OR Sev0 OR Sev1"
+          project: ["<project>"]
+          workItemType: [Bug, Issue, Impediment]
+          state: [Active, New]
+          top: 50
+        post_process: Convert `fields['System.AssignedTo']` and tags into owner + severity labels, then capture mitigation from description/comments.
+      - tool: wit_get_query_results_by_id
+        arguments:
+          id: "<shared query id>"
+          project: "<project>"
+          responseType: full
+        post_process: Reuse the team's saved WIQL queries (e.g., "Blockers") when available.
+
+  failing_work_items:
+    description: >
+      Track work items or PRs blocked by failed builds/policies so risks call
+      out actionable follow-ups.
+    required_fields:
+      - item_id
+      - context
+      - failing_check
+      - status
+      - owner
+      - eta
+    recommended_calls:
+      - tool: pipelines_get_builds
+        arguments:
+          project: "<project>"
+          minTime: "<iso window start>"
+          maxTime: "<iso window end>"
+          top: 50
+        post_process: Filter results where `result == "failed"` (or partially succeeded) after the call, then join back to linked work items via `wit_add_artifact_link` metadata or branch names.
+      - tool: wit_get_query_results_by_id
+        arguments:
+          id: "<Blocked work items query>"
+          project: "<project>"
+          responseType: full
+        post_process: Filter to records with `System.State` in (`Blocked`, `Review`, `Active`) and include ETA from custom fields.
+
+  project_items_upcoming:
+    description: >
+      Fetch Azure Boards backlog items tagged as Upcoming/Ready/Next with owner
+      + committed target date for the Upcoming section.
+    required_fields:
+      - title
+      - owner
+      - target_date
+      - blockers
+    recommended_calls:
+      - tool: wit_list_backlog_work_items
+        arguments:
+          project: "<project>"
+          team: "<team>"
+          backlogId: "<Features or Stories backlog>"
+        post_process: Filter to items with `Board Column` in [Ready, Upcoming] and pull target dates from custom fields.
+      - tool: work_list_team_iterations
+        arguments:
+          project: "<project>"
+          team: "<team>"
+          timeframe: current
+        post_process: Map iteration end dates to near-term commitments and annotate blockers from iteration capacity callouts.
+
+  milestone_target_dates:
+    description: >
+      Capture upcoming iteration or milestone end dates (< 2 weeks out) to keep
+      launch commitments fresh.
+    required_fields:
+      - title
+      - due_on
+      - owner
+    recommended_calls:
+      - tool: work_list_iterations
+        arguments:
+          project: "<project>"
+          depth: 3
+        post_process: Filter to iterations whose finishDate is within the next 14 days and map nodes back to milestone names.
+      - tool: wit_get_query_results_by_id
+        arguments:
+          id: "<Roadmap query id>"
+          top: 100
+        post_process: Use WIQL queries that store milestone targets in custom `TargetDate` fields; include owner from `System.AssignedTo`.
+
+fallback:
+  description: >
+    When the Azure DevOps MCP server is missing, domains are disabled, or a tool
+    returns no rows, collect manual summaries so Monday Minutes can still ship.
+  triggers: [ado_server_missing, domain_not_enabled, tool_not_available, empty_or_insufficient_results]
+  steps:
+    - action: ask_user
+      prompt: "Provide the top merged/completed pull requests (title + link + owner) for each sub-area last week."
+    - action: ask_user
+      prompt: "Share Sev0/Sev1/Blocked Azure Boards items with owners, severity, and mitigation steps."
+    - action: ask_user
+      prompt: "List any upcoming launches or iterations with target dates in the next two weeks."
+    - action: document_gap
+      note: "State explicitly that Azure DevOps telemetry was unavailable or partial when drafting the Monday Minutes section."
+
+example_sequences:
+  description: >
+    Example orchestrations for gathering telemetry once the Azure DevOps MCP
+    server is registered.
+  - name: ado_weekly_rollup
+    description: Enable required domains and gather PRs, blockers, and upcoming
+      milestones for the Monday Minutes workflow.
+    steps:
+      - order: 1
+        tool: mcp.list_tools
+        purpose: Confirm the `ado` server is registered.
+      - order: 2
+        tool: core_list_projects
+        purpose: Confirm the `core` domain is enabled and note the canonical project names to reuse in later calls.
+      - order: 3
+        tool: repo_list_pull_requests_by_repo_or_project
+        purpose: Fetch completed PRs for the target project(s) in the last week.
+        arguments:
+          project: "OneEngineering"
+          status: Completed
+          top: 100
+      - order: 4
+        tool: pipelines_get_builds
+        purpose: Pull successful release builds and failed runs for risk context.
+        arguments:
+          project: "OneEngineering"
+          minTime: "2024-11-25T00:00:00Z"
+          maxTime: "2024-12-02T00:00:00Z"
+      - order: 5
+        tool: search_workitem
+        purpose: Retrieve blocker bugs tagged `Sev0`, `Sev1`, or `Blocked`.
+        arguments:
+          project: ["OneEngineering"]
+          searchText: "Sev0 OR Sev1 OR Blocked"
+          workItemType: [Bug, Issue]
+      - order: 6
+        tool: wit_list_backlog_work_items
+        purpose: Collect Upcoming items from the team backlog for the next sprint.
+        arguments:
+          project: "OneEngineering"
+          team: "Agentic DevOps"
+          backlogId: "Microsoft.FeatureCategory"
+      - order: 7
+        tool: work_list_iterations
+        purpose: Map iteration finish dates to Monday Minutes milestone bullets.
+        arguments:
+          project: "OneEngineering"
+          depth: 3

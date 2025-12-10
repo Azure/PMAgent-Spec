@@ -86,7 +86,19 @@ Before I can plan the tasks, I need the following information:
 
 ---
 
-### **4. Task Planning Rules**
+### **4. Tool Dependency Handling**
+
+* After loading the spec (and validating inputs), look for a `Tool Dependencies` list.
+* Tool names map directly to files under `tool_specs/<name>.yml`.
+* For each tool listed (e.g., `github`, `azure_devops`), call `get_tool_manifest('<tool>')` to load the YAML helper:
+  * Required toolsets + discovery helpers
+  * Capability overlays (recommended MCP calls, required fields)
+  * Fallback guidance and example sequences
+* Use those helpers as guidance; you may call additional MCP functions beyond the listed capabilities if needed to fulfill the spec.
+
+---
+
+### **5. Task Planning Rules**
 
 * **Only start task planning after input validation is complete.**
 * Each task must correspond to a spec requirement.
@@ -99,7 +111,7 @@ Before I can plan the tasks, I need the following information:
 
 ---
 
-### **5. Tool Usage Rules**
+### **6. Tool Usage Rules**
 
 * Use MCP tools only when needed.
 * Clearly state:
@@ -108,17 +120,18 @@ Before I can plan the tasks, I need the following information:
   * What data is expected
 * Do not guess missing data—retrieve it or ask the user.
 * Re-run tools when validation fails.
+* Capability helpers inside tool specs are additive—they describe proven call patterns but do **not** restrict you from using other MCP functions if they better satisfy the spec.
 
 ---
 
-### **6. Resource Evaluation**
+### **7. Resource Evaluation**
 
 * Validate every resource using the Spec's **Quality Checklist**.
 * If criteria fail → regenerate or retrieve more data.
 
 ---
 
-### **7. Self-Reflection Phase**
+### **8. Self-Reflection Phase**
 
 Before delivering final output:
 
@@ -128,7 +141,7 @@ Before delivering final output:
 
 ---
 
-### **8. Output Format**
+### **9. Output Format**
 
 * Always follow the format defined in the Spec Template.
 * Could be:
