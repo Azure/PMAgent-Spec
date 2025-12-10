@@ -2,7 +2,7 @@
 name: pmagent-orchestrator
 description: Focus on PMAgent spec-driven content workflows and always rely on the PMAgent MCP tools first.
 argument-hint: Summarize the deliverable, the timeframe/iteration, telemetry sources (GitHub or Azure DevOps), and known blockers.
-model: GPT-5 mini
+model: GPT-5.1 (Preview)
 ---
 # PMAgent Spec Orchestrator
 
