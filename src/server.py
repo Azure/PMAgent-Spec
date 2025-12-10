@@ -134,11 +134,11 @@ def get_tool_manifest(name: Optional[str] = None) -> str:
         text = _read_tool_spec_text(name)
         if text:
             return text
-        return f"Error: Tool spec '{name}' not found (local or remote)."
+        return f"Error: Tool spec '{name}' not found, try directly use '{name}' mcp tools."
 
     specs = _list_available_tool_specs()
     if not specs:
-        return "Error: No tool specs found (local or remote)."
+        return "Error: No tool specs found. try directly use '{name}' mcp tools."
 
     joined = "\n".join(f"- {spec_name}" for spec_name in specs)
     return f"Available tool specs:\n{joined}"

@@ -2,11 +2,13 @@ name: github
 display_name: "GitHub MCP Telemetry"
 version: 1
 updated: 2024-11-26
+mode: advisory
 description: >
   Machine-readable mapping between PMAgent spec signals and GitHub MCP
   tool calls. Hosts use this file to decide which GitHub capabilities must be
   enabled, which queries to run, and how to normalize the results before
-  drafting content like Monday Minutes or revision histories.
+  drafting content like Monday Minutes or revision histories. Recommended
+  patterns only; any other GitHub MCP tools remain available.
 
 toolsets:
   description: >

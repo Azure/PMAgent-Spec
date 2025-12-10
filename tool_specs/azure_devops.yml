@@ -2,11 +2,13 @@ name: azure_devops
 display_name: "Azure DevOps MCP Telemetry"
 version: 1
 updated: 2024-12-04
+mode: advisory
 description: >
   Machine-readable mapping between PMAgent spec signals and Azure DevOps MCP
   tool calls. Hosts load this manifest when the Monday Minutes spec requests
   Azure DevOps data so agents know which domains to enable, which tools to
-  prefer, and how to fall back to manual collection.
+  prefer, and how to fall back to manual collection. Recommended patterns only;
+  other Azure DevOps MCP tools remain available.
 
 toolsets:
   description: >
@@ -208,33 +210,33 @@ example_sequences:
         tool: repo_list_pull_requests_by_repo_or_project
         purpose: Fetch completed PRs for the target project(s) in the last week.
         arguments:
-          project: "OneEngineering"
+          project: "<project>"
           status: Completed
           top: 100
       - order: 4
         tool: pipelines_get_builds
         purpose: Pull successful release builds and failed runs for risk context.
         arguments:
-          project: "OneEngineering"
-          minTime: "2024-11-25T00:00:00Z"
-          maxTime: "2024-12-02T00:00:00Z"
+          project: "<project>"
+          minTime: "<iso window start>"
+          maxTime: "<iso window end>"
       - order: 5
         tool: search_workitem
         purpose: Retrieve blocker bugs tagged `Sev0`, `Sev1`, or `Blocked`.
         arguments:
-          project: ["OneEngineering"]
+          project: ["<project>"]
           searchText: "Sev0 OR Sev1 OR Blocked"
           workItemType: [Bug, Issue]
       - order: 6
         tool: wit_list_backlog_work_items
         purpose: Collect Upcoming items from the team backlog for the next sprint.
         arguments:
-          project: "OneEngineering"
-          team: "Agentic DevOps"
-          backlogId: "Microsoft.FeatureCategory"
+          project: "<project>"
+          team: "<team>"
+          backlogId: "<backlog id>"
       - order: 7
         tool: work_list_iterations
         purpose: Map iteration finish dates to Monday Minutes milestone bullets.
         arguments:
-          project: "OneEngineering"
+          project: "<project>"
           depth: 3
