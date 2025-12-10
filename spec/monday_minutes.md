@@ -72,6 +72,7 @@ For each **team update**, the following must be provided:
 
   * Sub-area name (e.g., `Direct Models`, `Deployment templates`, `Efficiency`)
   * DRI (Directly Responsible Individual) for that sub-area
+    * If not provided, **ask the user for the DRI before drafting**. If the user cannot provide it, use the primary author/owner from the week’s PRs/issues as a provisional DRI and label it clearly (e.g., `DRI (provisional): <name>`).
 
 * **Per sub-area weekly content:**
 
@@ -104,6 +105,7 @@ Monday Minutes should combine human-provided talking points with live engineerin
 
 - If the user’s prompt explicitly asks for Azure DevOps (ADO) data—or references Boards, pipelines, or work items—load the `azure_devops` tool spec instead of (or in addition to) GitHub.
 - When the user wants both sources, run both specs and merge the resulting signals per sub-area, calling out the origin (GitHub vs ADO) when helpful.
+- **Never issue unauthenticated HTTP (e.g., `curl https://api.github.com/...`) to GitHub.** Always use the GitHub MCP server (after calling `get_tool_manifest('github')`). If the GitHub MCP server or auth is unavailable, escalate to user.
 
 ### **5.1 Delivery Signals (Weekly)**
 
@@ -125,6 +127,7 @@ Monday Minutes should combine human-provided talking points with live engineerin
 Some orgs still provide spreadsheets or ad-hoc context. When GitHub data is missing or incomplete, ask for:
 
 - Explicit highlights/risks/upcoming bullets per sub-area
+- DRI for each sub-area; if unavailable, set a provisional DRI from the primary PR/issue author and mark it as provisional.
 - Links to dashboards or docs supporting the claims
 - Confirmation that no GitHub telemetry is available, so the agent can skip tool calls per the fallback plan
 
@@ -153,8 +156,9 @@ If a referenced tool spec cannot be satisfied:
    - “Please list the top merged PRs (title, link, owners) for each sub-area last week.”
    - “Share any open Sev0/Sev1 risks, the owner, and the mitigation ETA.”
    - “Provide upcoming launches or milestones with dates for the next two weeks.”
-3. **Accept minimal datasets** if necessary: TLDR + 3 highlights + explicit risks per sub-area.
-4. **Document gaps** in the final output (e.g., “GitHub telemetry unavailable; content based on manual inputs from <user>”).
+3. **Collect DRIs**: Ask for a DRI per sub-area; if the user cannot provide one, set a provisional DRI from the primary PR/issue author and label it as provisional.
+4. **Accept minimal datasets** if necessary: TLDR + 3 highlights + explicit risks per sub-area.
+5. **Document gaps** in the final output (e.g., “GitHub telemetry unavailable; content based on manual inputs from <user>”).
 
 When some but not all tools from a referenced spec are available, use a hybrid approach: pull whatever telemetry you can, then ask the user to fill the remaining sections.
 
@@ -254,6 +258,7 @@ Each bullet should:
 * Describe a **specific** event, change, or result.
 * Include numbers / dates when available (e.g., MAU, token growth, percentage improvements).
 * Avoid generic “working on X” without any outcome.
+* When referencing a PR/issue, include the PR number and hyperlink (e.g., `PR #123 [Fix login bug](https://github.com/org/repo/pull/123)`), and include the author when available.
 
 **Example:**
 
@@ -361,6 +366,7 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
   * Default to GitHub when the source is unspecified; call `get_tool_manifest('github')` to inspect capabilities before planning tool calls.
   * When the user requests Azure DevOps data (or GitHub telemetry is unavailable), also call `get_tool_manifest('azure_devops')` and map each capability (`merged_prs_last_week`, etc.) to the Azure DevOps tools.
   * If both sources are requested, gather data from each and label notable bullets with the source when it aids clarity.
+  * Do **not** call GitHub via unauthenticated curl/HTTP. Use GitHub MCP tools; if unavailable, switch to the fallback plan and ask the user for data.
 
 3. **Identify sub-areas**
 
@@ -369,7 +375,7 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
 
 4. **For each sub-area:**
 
-   * Determine DRI from inputs.
+   * Determine DRI from inputs; if missing, prompt the user once for it. When no DRI is provided but telemetry includes an author/owner, set that as a provisional DRI and label it accordingly.
    * Summarize into a 1–3 sentence TLDR.
    * Extract 3–8 concrete Highlights.
    * Extract 0–5 Risks + Blockers; if none exist, emit `None`.
@@ -405,8 +411,11 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
 
 * [ ] TLDR matches the main points from Highlights/Risks/Upcoming.
 * [ ] Highlights are concrete and specific.
+* [ ] PR-related highlights include PR numbers and clickable URLs.
 * [ ] Risks are clearly stated and not fabricated.
 * [ ] Upcoming items have clear actions or milestones.
+* [ ] DRIs are provided; any inferred/provisional DRIs are labeled as such.
+* [ ] GitHub telemetry came from the GitHub MCP tools (or documented manual fallback), not unauthenticated curl/HTTP calls.
 
 ### **Tone**
 
