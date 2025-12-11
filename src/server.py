@@ -2,12 +2,11 @@ import os
 from typing import Optional
 
 import requests
-import uvicorn
 import yaml
 from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
-mcp = FastMCP("Spec Fetcher")
+mcp = FastMCP("Spec Fetcher", host="0.0.0.0", port=8100)
 
 # Define paths
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -212,4 +211,5 @@ def fetch_spec(name: str) -> str:
         return f"Error fetching spec: {str(e)}"
 
 if __name__ == "__main__":
-    uvicorn.run(mcp.sse_app(), host="0.0.0.0", port=8100)
+    # Run with the MCP Streamable HTTP transport (chunked responses over POST)
+    mcp.run(transport="streamable-http")

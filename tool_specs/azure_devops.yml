@@ -5,7 +5,7 @@ updated: 2024-12-04
 mode: advisory
 description: >
   Machine-readable mapping between PMAgent spec signals and Azure DevOps MCP
-  tool calls. Hosts load this manifest when the Monday Minutes spec requests
+  tool calls(ado). Hosts load this manifest when the Monday Minutes spec requests
   Azure DevOps data so agents know which domains to enable, which tools to
   prefer, and how to fall back to manual collection. Recommended patterns only;
   other Azure DevOps MCP tools remain available.

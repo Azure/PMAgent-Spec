@@ -1,10 +1,13 @@
 # PMAgent Spec MCP VSCode Extension
 
-This VSCode extension automatically registers the PMAgent Spec MCP server at `http://localhost:8080/mcp`.
+[![Install in VS Code](https://img.shields.io/badge/Install%20in%20VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=pmagent.pmagent-spec-mcp)
+
+This VSCode extension automatically registers the PMAgent Spec MCP server at `https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp`.
 
 ## Features
 
 - Automatically registers the PMAgent Spec MCP server on activation
+- Bundles the PMAgent Copilot agent template and drops it into `.github/agents/pmagent.agent.md` when a workspace is open (skips if you already have one)
 - Configurable server URL via VSCode settings
 - Updates registration when configuration changes
 
@@ -14,7 +17,7 @@ You can configure the MCP server URL in VSCode settings:
 
 ```json
 {
-  "pmagentSpecMcp.serverUrl": "http://localhost:8080/mcp"
+  "pmagentSpecMcp.serverUrl": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp"
 }
 ```
 
@@ -46,4 +49,3 @@ You can configure the MCP server URL in VSCode settings:
    - Select the `.vsix` file
 
 2. The extension will automatically register the MCP server on activation.
-
