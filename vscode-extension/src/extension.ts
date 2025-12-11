@@ -19,6 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
     // Register via settings.json (Stable API)
     updateMcpSettings(serverUrl);
 
+    // Place the Copilot agent template into the workspace if needed
+    void ensureAgentTemplate(context);
+
     // Listen for configuration changes
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(e => {
@@ -50,15 +53,15 @@ async function updateMcpSettings(url: string) {
         const servers = mcpConfig.get<any>('servers') || {};
 
         // Optimization: Check if the server is already configured correctly
-        if (servers['pmagent-spec'] && servers['pmagent-spec'].url === url) {
+        const desiredConfig = { type: "http", url };
+        const currentConfig = servers['pmagent-spec'];
+        if (currentConfig && currentConfig.url === url && currentConfig.type === desiredConfig.type) {
             outputChannel.appendLine('Server already configured correctly in one of the scopes. No changes made.');
             return; // No change needed
         }
 
         // Update the server configuration
-        servers['pmagent-spec'] = {
-            url: url
-        };
+        servers['pmagent-spec'] = desiredConfig;
 
         // Write back to Global settings (User settings)
         outputChannel.appendLine('Writing to Global settings...');
@@ -70,6 +73,47 @@ async function updateMcpSettings(url: string) {
         outputChannel.appendLine(`Error: Failed to configure MCP server: ${error}`);
         console.error(error);
         vscode.window.showErrorMessage(`Failed to configure MCP server: ${error}`);
+    }
+}
+
+async function ensureAgentTemplate(context: vscode.ExtensionContext) {
+    const workspaces = vscode.workspace.workspaceFolders;
+    if (!workspaces || workspaces.length === 0) {
+        outputChannel.appendLine('No workspace open; skipping agent template copy.');
+        return;
+    }
+
+    const templateUri = vscode.Uri.joinPath(context.extensionUri, 'resources', 'pmagent.agent.md');
+    let templateContent: Uint8Array;
+    try {
+        templateContent = await vscode.workspace.fs.readFile(templateUri);
+    } catch (error) {
+        outputChannel.appendLine(`Error reading bundled agent template: ${error}`);
+        return;
+    }
+
+    for (const workspace of workspaces) {
+        const agentsDir = vscode.Uri.joinPath(workspace.uri, '.github', 'agents');
+        const targetUri = vscode.Uri.joinPath(agentsDir, 'pmagent.agent.md');
+
+        try {
+            await vscode.workspace.fs.stat(targetUri);
+            outputChannel.appendLine(`Agent template already exists at ${targetUri.fsPath}; leaving it untouched.`);
+            continue;
+        } catch (error) {
+            if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') {
+                outputChannel.appendLine(`Could not check for existing agent at ${targetUri.fsPath}: ${error}`);
+                continue;
+            }
+        }
+
+        try {
+            await vscode.workspace.fs.createDirectory(agentsDir);
+            await vscode.workspace.fs.writeFile(targetUri, templateContent);
+            outputChannel.appendLine(`Copied PMAgent Copilot agent template to ${targetUri.fsPath}`);
+        } catch (error) {
+            outputChannel.appendLine(`Failed to copy agent template to ${targetUri.fsPath}: ${error}`);
+        }
     }
 }
 

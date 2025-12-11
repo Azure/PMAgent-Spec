@@ -20,7 +20,7 @@
       "properties": {
         "pmagentSpecMcp.serverUrl": {
           "type": "string",
-          "default": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/sse",
+          "default": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp",
           "description": "URL of the PMAgent Spec MCP server"
         }
       }
@@ -37,4 +37,3 @@
     "typescript": "^5.0.0"
   }
 }
-

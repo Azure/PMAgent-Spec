@@ -1,5 +1,7 @@
 # PMAgent-Spec MCP Server
 
+[![Install in VS Code](https://img.shields.io/badge/Install%20in%20VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=pmagent.pmagent-spec-mcp)
+
 An MCP (Model Context Protocol) server for fetching PMAgent specifications.
 
 ## What does this extension do?
@@ -25,8 +27,8 @@ By default, the extension connects to the remote Azure-hosted server. You can ch
 1.  Open **Settings** (`Cmd+,` or `Ctrl+,`).
 2.  Search for **"PMAgent"**.
 3.  Update the **Server Url**.
-    *   Remote (Default): `https://.../sse`
-    *   Local: `http://localhost:8100/sse`
+    *   Remote (Default): `https://.../mcp`
+    *   Local: `http://localhost:8100/mcp`
 
 ## Local Development
 
@@ -42,17 +44,17 @@ If you want to run the server locally and test changes:
     ```bash
     python server.py
     ```
-    The server will listen on `http://0.0.0.0:8100`.
+    The server will listen for MCP Streamable HTTP on `http://0.0.0.0:8100/mcp`.
 
 3.  **Connect Extension**:
-    Update the extension setting (as above) to `http://localhost:8100/sse` and reload the window.
+    Update the extension setting (as above) to `http://localhost:8100/mcp` and reload the window.
 
     ```json
         {
             "servers": {
                 "spec-fetcher": {
-                    "type": "sse",
-                    "url": "http://localhost:8100/sse"
+                    "type": "http",
+                    "url": "http://localhost:8100/mcp"
                 }
             }
         }
@@ -102,21 +104,3 @@ This repository uses GitHub Actions for Continuous Deployment.
 
 - [GitHub MCP Server](https://github.com/github/github-mcp-server)
 - [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)
-
-## GitHub Copilot agent template
-
-GitHub Copilot and VS Code can preload behavior through `.agent.md` files stored in `.github/agents/` ([VS Code docs](https://code.visualstudio.com/docs/copilot/customization/custom-agents), [GitHub docs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/create-custom-agents)). To keep PMAgent front-and-center even when users have many MCP servers installed, this repo now ships a ready-to-copy template under `copilot-agent-template/.github/agents/pmagent-spec.agent.md`.
-
-The template:
-
-- Pins Copilot to the `pmagent-spec` MCP server tools so spec discovery (`list_specs`, `fetch_spec`, `get_tool_manifest`) always comes from our source of truth.
-- Forces every run to call `content_generation_best_practice` first, mirror the selected spec word-for-word, and re-check the completion checklist before answering.
-- Reminds Copilot to load any dependent tool manifests (for example GitHub or Azure DevOps) listed inside the spec and to cite missing telemetry.
-
-To use it in another repository:
-
-1. Ensure the PMAgent MCP server is available to your users (install the VS Code extension or add the server to `~/.mcp`).
-2. Copy the `.github/agents` folder from `copilot-agent-template` into the target repository’s root (merge with the existing folder if needed) and commit it.
-3. In Copilot Chat, open the agent dropdown, pick **PMAgent Spec Orchestrator**, and start prompting. The template shows up automatically anywhere `.agent.md` files are supported.
-
-Customize the file’s YAML frontmatter if you need a different default model or additional MCP tools; the instructions section can also be extended with team-specific formatting rules.

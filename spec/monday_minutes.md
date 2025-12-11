@@ -83,6 +83,9 @@ For each **team update**, the following must be provided:
 
 ### **4.2 Optional Inputs**
 
+* **Time**
+  By default it should be only ONE week, the last week. But if the date is not very clear, ask user to clarify.
+
 Per team or per sub-area:
 
 * **Ships this week / Ships next week:**
@@ -130,6 +133,7 @@ Some orgs still provide spreadsheets or ad-hoc context. When GitHub data is miss
 - DRI for each sub-area; if unavailable, set a provisional DRI from the primary PR/issue author and mark it as provisional.
 - Links to dashboards or docs supporting the claims
 - Confirmation that no GitHub telemetry is available, so the agent can skip tool calls per the fallback plan
+- Date range for Monday minutes
 
 Document which data sources were used so reviewers know whether the update came from GitHub telemetry or manual inputs.
 
