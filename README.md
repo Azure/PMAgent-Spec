@@ -2,105 +2,66 @@
 
 [![Install in VS Code](https://img.shields.io/badge/Install%20in%20VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=pmagent.pmagent-spec-mcp)
 
-An MCP (Model Context Protocol) server for fetching PMAgent specifications.
+PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent content specs (Monday Minutes, revision histories, OKR reports, SDK READMEs, etc.) to GitHub Copilot or any MCP-capable client. The companion VS Code extension auto-registers the hosted server and drops the `pmagent-orchestrator` agent template into your repo so Copilot can immediately call the PMAgent tools.
 
-## What does this extension do?
+## Install in VS Code
 
-This VS Code / Cursor extension **automatically registers the PMAgent MCP server** for you.
+1. Open the Extensions view (`Cmd/Ctrl+Shift+X`).
+2. Search for **“PMAgent Spec MCP”** and install.
+3. The extension registers `https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp` automatically. Check the **PMAgent MCP** output channel for confirmation.
 
-Instead of manually configuring JSON files or connection strings, simply installing this extension will add the PMAgent server to your MCP configuration, making tools like `fetch_spec` immediately available to your AI assistant.
+## MCP helpers to pair with
 
-## Installation
+- GitHub MCP: Use when repos and PRs live in GitHub (merged PRs, blockers, milestones, upcoming project items). [Repo](https://github.com/github/github-mcp-server)
+- Azure DevOps MCP: Use when telemetry lives in ADO (Boards, pipelines/releases, blockers, upcoming backlog items). [Repo](https://github.com/microsoft/azure-devops-mcp)
+- Power BI Modeling MCP: Use when a spec needs dashboard or semantic model metrics (e.g., OKR or Monday Minutes KPIs). [Repo](https://github.com/microsoft/powerbi-modeling-mcp)
 
-The extension is available on the **Visual Studio Marketplace**.
+## Use with GitHub Copilot in VS Code
 
-1.  Open the **Extensions** view in VS Code or Cursor (`Cmd+Shift+X` or `Ctrl+Shift+X`).
-2.  Search for **"PMAgent Spec MCP"**.
-3.  Click **Install**.
+1. In Copilot Chat, choose the **pmagent-orchestrator** agent (the extension adds `.github/agents/pmagent.agent.md` for you).
+2. Describe the deliverable plus telemetry sources (GitHub vs ADO vs Power BI) and the repos/projects/date range.
 
-That's it! The extension will automatically register the server connection. You can check your Output panel ("PMAgent MCP" channel) to see the confirmation.
+## Supported scenarios (specs)
 
-## Configuration
+- `monday_minutes`: Generate Monday Minutes updates for a team or project.
+- `revision_history`: Create revision history / release notes from GitHub PRs and Azure DevOps work items tied to a release.
+- `product_status_report`: Summarize product/release health with progress, risks, bugs, dependencies, and next steps.
+- `okr_report`: Produce OKR performance reports (SignalR/Web PubSub) with predefined KQL queries and insights.
+- `feature_history_traker`: Turn commits/PRs/work items into a narrative feature history grouped by phases/workstreams.
+- `sdk_readme`: Generate or update an SDK README from source code, APIs, dependencies, and samples.
 
-By default, the extension connects to the remote Azure-hosted server. You can change this URL (e.g., for local development) in the extension settings:
+## Remote MCP config (manual)
 
-1.  Open **Settings** (`Cmd+,` or `Ctrl+,`).
-2.  Search for **"PMAgent"**.
-3.  Update the **Server Url**.
-    *   Remote (Default): `https://.../mcp`
-    *   Local: `http://localhost:8100/mcp`
+If you are not using the extension, register the hosted server in your MCP client (e.g., `~/.config/github-copilot/mcp.json`):
 
-## Local Development
+```json
+{
+  "mcpServers": {
+    "pmagent-spec": {
+      "transport": {
+        "type": "http",
+        "url": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp"
+      }
+    }
+  }
+}
+```
 
-If you want to run the server locally and test changes:
+Add your other MCP servers (GitHub, Azure DevOps, Power BI) to the same file per their docs so the manifests in `tool_specs/` can be used.
 
-1.  **Install Dependencies**:
-    ```bash
-    cd src
-    pip install -r requirements.txt
-    ```
+## What it does
 
-2.  **Start the Server**:
-    ```bash
-    python server.py
-    ```
-    The server will listen for MCP Streamable HTTP on `http://0.0.0.0:8100/mcp`.
+- Serves spec templates and writing guardrails through `content_generation_best_practice`, `list_specs`, and `fetch_spec`.
+- Documents telemetry helpers through `get_tool_manifest`, mapping each spec to the right GitHub, Azure DevOps, or Power BI MCP calls.
+- Provides an extension that registers the remote server at activation (no manual JSON edits required).
 
-3.  **Connect Extension**:
-    Update the extension setting (as above) to `http://localhost:8100/mcp` and reload the window.
+## Local development
 
-    ```json
-        {
-            "servers": {
-                "spec-fetcher": {
-                    "type": "http",
-                    "url": "http://localhost:8100/mcp"
-                }
-            }
-        }
-    ```
+1. Optional: create a virtual environment in `src/` (`python -m venv .venv && source .venv/bin/activate`).
+2. Install dependencies: `pip install -r src/requirements.txt`.
+3. Start the MCP server: `python src/server.py` (listens on `http://0.0.0.0:8100/mcp`).
+4. Point your MCP config or the VS Code setting `pmagentSpecMcp.serverUrl` to `http://localhost:8100/mcp`, then reload the client.
 
-## Deployment
+## Contributing
 
-This repository uses GitHub Actions for Continuous Deployment.
-
-*   **Trigger**: Pushes to the `main` branch.
-*   **Action**: Builds the Docker image and deploys it to Azure Container Apps.
-*   **Result**: The remote MCP server is automatically updated with the latest code and specs.
-
-## Available Tools
-
--   `content_generation_best_practice()` - Learn the best practice of content generation.
--   `list_specs()` - List all available specifications from the index.
--   `fetch_spec(name: str)` - Fetch the content of a specification by its name.
--   `get_tool_manifest(name?: str)` - Return tool spec YAML (when a `name` is provided) or list all tool specs discovered under `tool_specs/`.
-
-## Tool Specs & GitHub Copilot Flow
-
-- Each tool spec is a single YAML file under `tool_specs/` (e.g., `tool_specs/github.yml`) exposed through `get_tool_manifest`.
-- Every entry enumerates:
-  - Required toolsets and discovery helpers (e.g., GitHub MCP `pull_requests`, `issues`, `projects`)
-  - Capability helpers (merged PRs, blockers, roadmap items) with recommended MCP tool calls
-  - Example call sequences and fallback prompts when telemetry is unavailable
-- Capability helpers are additive; you can still use any other MCP tool if it better satisfies the spec.
-- Inside GitHub Copilot, the host can now:
-  1. Call `list_specs` / `fetch_spec('monday_minutes')` for the narrative structure.
-  2. Call `get_tool_manifest('github')` to load the YAML describing how to gather GitHub telemetry (capabilities, required toolsets, fallback).
-  3. Use the GitHub MCP server to collect merged PRs, blockers, and upcoming project items before drafting the update per the spec.
-
-### Adding or Referencing Tool Specs
-
-1. Create `tool_specs/<tool>.yml` following the same schema (metadata, `toolsets`, `capabilities`, `fallback`, `example_sequences`).
-2. Update any content spec's **Tool Dependencies** section to list the tool name (e.g., `- github`). No additional metadata is required inside the spec.
-3. The system prompt instructs agents to call `get_tool_manifest('<tool>')` whenever a dependency is present, so no further server changes are needed.
-
-### Azure DevOps Telemetry
-
-- `tool_specs/azure_devops.yml` mirrors the GitHub manifest but targets the [microsoft/azure-devops-mcp](https://github.com/microsoft/azure-devops-mcp) server. Enable the `core`, `repositories`, `work`, and `work-items` domains (plus `pipelines`/`search` when release data is needed) before invoking its capability helpers.
-- `spec/monday_minutes.md` now inspects the user's prompt for a telemetry preference: GitHub is the default source, but if the user asks for Azure DevOps (Boards, pipelines, work items, etc.), the agent must call `get_tool_manifest('azure_devops')` and satisfy each capability (`merged_prs_last_week`, `open_blocker_issues`, ...) with the ADO tools.
-- When a user wants mixed telemetry, load both manifests and merge the resulting signals; annotate Highlights/Risks with the source when it aids reviewers.
-
-## Useful MCP Servers 
-
-- [GitHub MCP Server](https://github.com/github/github-mcp-server)
-- [Azure DevOps MCP Server](https://github.com/microsoft/azure-devops-mcp)
+See `CONTRIBUTING.md`.
