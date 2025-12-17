@@ -34,7 +34,7 @@ Inputs that must be collected from the user before proceeding:
 
 **Mandatory:**
 - Product Name: Official name of the product being documented
-- Dashboard/Report Links: URLs to relevant Power BI dashboards or reports
+- Dashboard/Report Links: URLs to relevant Power BI dashboards or reports which could link to Semantic Model.
 
 **Optional:**
 - Specific OKR Names: If targeting specific OKRs, provide their names and priorities
@@ -243,7 +243,7 @@ The final output **MUST** be delivered as a markdown document following this exa
 ### 1.2. Power BI Semantic Model Schema Overview 
 
 - **Semantic Model**: <NAME_OF_MODEL>
-	- **Dashboard/Report**: <LINK_TO_BI_DASHBOARD>
+	- **Link to Semantic Model***: <LINK_TO_SEMANTIC_MODEL>
     - **Tables**
         - <NAME_OF_TABLE_1>: <SHORT_PURPOSE_DESC>
 	    - <NAME_OF_TABLE_2>: <SHORT_PURPOSE_DESC>
@@ -257,7 +257,7 @@ The final output **MUST** be delivered as a markdown document following this exa
 - **Table Name**: <NAME_OF_TABLE_1>
 - **Purpose**: <WHAT_THIS_TABLE_IS_USED_FOR>
 - **Semantic Model**: <NAME_OF_MODEL>
-- **Dashboard/Report**: <LINK_TO_BI_DASHBOARD>
+- **Link to Semantic Model**: <LINK_TO_SEMANTIC_MODEL>
 
 #### 2.1.1. Columns
 
