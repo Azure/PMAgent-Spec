@@ -96,7 +96,7 @@ Per team or per sub-area:
   * Release notes, dashboards, blog posts, design docs
 * **Metrics:**
 
-  * Usage numbers, capacity data, savings, traffic, or adoption metrics
+  * Usage numbers, capacity data, savings, traffic, or adoption metrics. These metrics may come from PowerBI dashboards (via the PowerBI MCP) or ADX (Kusto) queries executed through the ADO MCP. Provide dataset/workspace names or the query text + date window when requesting metrics so the agent can pull the right slices.
 
 ---
 
@@ -108,6 +108,8 @@ Monday Minutes should combine human-provided talking points with live engineerin
 
 - If the user’s prompt explicitly asks for Azure DevOps (ADO) data—or references Boards, pipelines, or work items—load the `azure_devops` tool spec instead of (or in addition to) GitHub.
 - When the user wants both sources, run both specs and merge the resulting signals per sub-area, calling out the origin (GitHub vs ADO) when helpful.
+- If the user requests dashboard/scorecard metrics, load the `powerbi` tool spec and use the PowerBI MCP to fetch the figures (ask for workspace/report/dataset names or a saved view when unclear).
+- If the user requests ADX/Kusto metrics, run the Kusto-capable tools in the ADO MCP (after calling `get_tool_manifest('azure_devops')`) with the provided query text/time window and label the source as Kusto/ADX.
 - **Never issue unauthenticated HTTP (e.g., `curl https://api.github.com/...`) to GitHub.** Always use the GitHub MCP server (after calling `get_tool_manifest('github')`). If the GitHub MCP server or auth is unavailable, escalate to user.
 
 ### **5.1 Delivery Signals (Weekly)**
@@ -125,9 +127,15 @@ Monday Minutes should combine human-provided talking points with live engineerin
 - **`project_items_upcoming`** – Items in program boards (GitHub Projects or equivalents) categorized as `Upcoming`, `Ready`, or `Next`. Capture item title, owner/DRI, target date, and blocking dependencies.
 - **`milestone_target_dates`** – Milestones due within the next 2 weeks for each repo.
 
-### **5.4 Manual Inputs**
+### **5.4 Metric Signals (PowerBI/ADX)**
 
-Some orgs still provide spreadsheets or ad-hoc context. When GitHub data is missing or incomplete, ask for:
+- Use the PowerBI MCP for dashboard- or scorecard-sourced metrics; confirm the workspace/report/dataset plus the measure/view to pull, and note the date grain and window.
+- Use the ADO MCP’s Kusto-capable tools when the user provides ADX/Kusto query text; pass the requested date window and surface the output in Highlights/Risks/Upcoming with source + timeframe.
+- Metric bullets should cite the source (PowerBI vs Kusto/ADO) and the reporting window; avoid invented metrics if the query or dataset is missing—ask for the exact metric instead.
+
+### **5.5 Manual Inputs**
+
+Some orgs still provide spreadsheets or ad-hoc context. When GitHub/ADO/PowerBI data is missing or incomplete, ask for:
 
 - Explicit highlights/risks/upcoming bullets per sub-area
 - DRI for each sub-area; if unavailable, set a provisional DRI from the primary PR/issue author and mark it as provisional.
@@ -145,9 +153,10 @@ Document which data sources were used so reviewers know whether the update came 
 Tool Dependencies:
 - github
 - azure_devops
+- powerbi
 ```
 
-Hosts must call `get_tool_manifest('github')` and/or `get_tool_manifest('azure_devops')` (per the list above) before planning telemetry calls so the agent can ingest the capability helpers, required toolsets, and fallback steps.
+Hosts must call `get_tool_manifest('github')` and/or `get_tool_manifest('azure_devops')` and, when metrics are requested from dashboards, `get_tool_manifest('powerbi')` (per the list above) before planning telemetry calls so the agent can ingest the capability helpers, required toolsets, and fallback steps.
 
 ---
 
@@ -160,9 +169,10 @@ If a referenced tool spec cannot be satisfied:
    - “Please list the top merged PRs (title, link, owners) for each sub-area last week.”
    - “Share any open Sev0/Sev1 risks, the owner, and the mitigation ETA.”
    - “Provide upcoming launches or milestones with dates for the next two weeks.”
+   - “Provide the PowerBI dashboard/report link or the ADX/Kusto query + parameters for the metrics you want pulled.”
 3. **Collect DRIs**: Ask for a DRI per sub-area; if the user cannot provide one, set a provisional DRI from the primary PR/issue author and label it as provisional.
 4. **Accept minimal datasets** if necessary: TLDR + 3 highlights + explicit risks per sub-area.
-5. **Document gaps** in the final output (e.g., “GitHub telemetry unavailable; content based on manual inputs from <user>”).
+5. **Document gaps** in the final output (e.g., “GitHub/ADO/PowerBI telemetry unavailable; content based on manual inputs from <user>”).
 
 When some but not all tools from a referenced spec are available, use a hybrid approach: pull whatever telemetry you can, then ask the user to fill the remaining sections.
 
@@ -369,6 +379,8 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
   * Read the latest user prompt for explicit instructions (e.g., `source=ado`, “use Azure DevOps Boards”, “pull GitHub activity”).
   * Default to GitHub when the source is unspecified; call `get_tool_manifest('github')` to inspect capabilities before planning tool calls.
   * When the user requests Azure DevOps data (or GitHub telemetry is unavailable), also call `get_tool_manifest('azure_devops')` and map each capability (`merged_prs_last_week`, etc.) to the Azure DevOps tools.
+  * When the user asks for dashboard/PowerBI metrics, call `get_tool_manifest('powerbi')` and plan PowerBI MCP pulls (confirm workspace/report/dataset + measure names).
+  * When the user asks for ADX/Kusto metrics, treat them as ADO data: call `get_tool_manifest('azure_devops')`, use the Kusto-capable tools with the provided query text + time window, and avoid inventing queries.
   * If both sources are requested, gather data from each and label notable bullets with the source when it aids clarity.
   * Do **not** call GitHub via unauthenticated curl/HTTP. Use GitHub MCP tools; if unavailable, switch to the fallback plan and ask the user for data.
 
@@ -419,6 +431,7 @@ When the agent generates a **team’s Monday Minutes update**, it MUST：
 * [ ] Risks are clearly stated and not fabricated.
 * [ ] Upcoming items have clear actions or milestones.
 * [ ] DRIs are provided; any inferred/provisional DRIs are labeled as such.
+* [ ] Metrics cite source + timeframe (PowerBI vs ADX/Kusto) and were pulled via the relevant MCP or documented as manual.
 * [ ] GitHub telemetry came from the GitHub MCP tools (or documented manual fallback), not unauthenticated curl/HTTP calls.
 
 ### **Tone**

@@ -1,0 +1,152 @@
+name: powerbi
+display_name: "Power BI Modeling MCP"
+version: 1
+updated: 2025-02-06
+mode: advisory
+description: >
+  Mapping between PMAgent metric signals and the Power BI Modeling MCP server
+  (https://github.com/microsoft/powerbi-modeling-mcp). Use this manifest when
+  Monday Minutes (or other specs) ask for dashboard/scorecard metrics from
+  Power BI semantic models. Recommended patterns only; other MCP tools exposed
+  by the server remain available.
+
+toolsets:
+  description: >
+    The Power BI Modeling MCP groups tools by operation family. Ensure
+    connection + DAX query operations are available before planning metric
+    pulls.
+  required: [connection_operations, dax_query_operations]
+  optional:
+    [
+      database_operations,
+      model_operations,
+      measure_operations,
+      table_operations,
+      partition_operations,
+      calculation_group_operations,
+      security_role_operations,
+      trace_operations,
+      batch_table_operations,
+      batch_column_operations,
+      batch_measure_operations
+    ]
+  discovery_tools:
+    - mcp.list_tools
+
+capabilities:
+  description: >
+    Helper overlays that map PMAgent metric needs to Power BI MCP calls. Agents
+    may execute additional tools beyond this list; these entries document
+    common flows and required fields.
+
+  metric_snapshot:
+    description: >
+      Retrieve a single-point metric (e.g., last-week usage, current capacity)
+      via a DAX query against a connected semantic model. Use for Monday
+      Minutes Highlights or TLDR metrics.
+    required_fields:
+      - metric_name
+      - value
+      - unit
+      - window
+      - source
+    recommended_calls:
+      - tool: mcp.list_tools
+        purpose: Confirm `connection_operations` and `dax_query_operations` are registered.
+      - tool: "connection_operations.(connect_to_fabric | connect_to_power_bi_desktop | connect_to_pbip)"
+        arguments:
+          workspace: "<workspace name>"
+          semantic_model: "<dataset/model name>"
+        post_process: Establish a live connection to the target model; reuse the same connection for all queries.
+      - tool: dax_query_operations.run_dax_query
+        arguments:
+          query: "<DAX query text provided by user or generated from measure name + date window>"
+          executionMetricsOnly: false
+          clearCache: false
+        post_process: Map the scalar result to `value` + `unit`; attach `window` and source=PowerBI.
+
+  metric_timeseries:
+    description: >
+      Pull a time series (daily/weekly) to compute WoW/MoM deltas for Monday
+      Minutes Highlights/Risks.
+    required_fields:
+      - metric_name
+      - values
+      - granularity
+      - window
+      - source
+    recommended_calls:
+      - tool: dax_query_operations.run_dax_query
+        arguments:
+          query: "<DAX query returning date + metric columns for the requested window/grain>"
+          executionMetricsOnly: false
+          clearCache: false
+        post_process: Compute WoW/MoM deltas as needed; include source=PowerBI + exact date window.
+
+  metric_refresh_status:
+    description: >
+      Capture the freshness of the semantic model so metric staleness can be
+      called out in Risks.
+    required_fields:
+      - semantic_model
+      - last_refresh
+      - status
+    recommended_calls:
+      - tool: model_operations.get_model
+        arguments:
+          semantic_model: "<dataset/model name>"
+        post_process: Extract last refresh timestamp/status; flag stale data if older than the reporting window.
+
+  measure_catalog:
+    description: >
+      List measures available in the connected model so the agent can target
+      the correct metric or ask for a missing measure definition.
+    required_fields:
+      - table
+      - measure_name
+      - expression
+    recommended_calls:
+      - tool: measure_operations.list_measures
+        arguments:
+          semantic_model: "<dataset/model name>"
+        post_process: Surface measure names/expressions relevant to the user’s requested metric.
+
+fallback:
+  description: >
+    Guidance for collecting manual data when the Power BI MCP server is
+    unavailable or returns empty results.
+  triggers: [powerbi_server_missing, tool_not_available, empty_or_insufficient_results]
+  steps:
+    - action: ask_user
+      prompt: "Provide the Power BI workspace + dataset (semantic model) name and the DAX query or measure to use."
+    - action: ask_user
+      prompt: "If you cannot share a DAX query, provide the metric name, filters, and date window; the agent will draft a query for confirmation."
+    - action: ask_user
+      prompt: "Share the last refresh time for the dataset so data freshness can be cited."
+    - action: document_gap
+      note: "State in the final output that PowerBI telemetry was unavailable and metrics are based on manual inputs."
+
+example_sequences:
+  description: >
+    Canonical orchestration flows for metric collection once the Power BI MCP
+    server is registered.
+  - name: powerbi_metric_pull
+    description: Connect to the target model and retrieve a scalar metric for Monday Minutes.
+    steps:
+      - order: 1
+        tool: mcp.list_tools
+        purpose: Confirm PowerBI tools are available.
+      - order: 2
+        tool: connection_operations.connect_to_fabric
+        purpose: Connect to the Fabric workspace + semantic model provided by the user.
+        arguments:
+          workspace: "<workspace name>"
+          semantic_model: "<dataset/model name>"
+      - order: 3
+        tool: dax_query_operations.run_dax_query
+        purpose: Execute the provided or generated DAX query for the target metric.
+        arguments:
+          query: "<DAX query>"
+      - order: 4
+        tool: model_operations.get_model
+        purpose: Record last refresh time to annotate metric freshness.
