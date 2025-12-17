@@ -16,3 +16,6 @@
 - name: monday_minutes
   file: monday_minutes.md
   description: This spec is for generating Monday Minutes update for a team or project
+- name: powerbi_telemetry_knowledge
+  file: powerbi_telemetry_knowledge.md
+  description: This spec is for generating knowledge articles of product PowerBI telemetry and product OKR. It guides the AI to analyze PowerBI reports, dashboards, and datasets to extract Power BI Semantic Model Schema and OKRs. The output is a structured knowledge article that provides insights into product telemetry and OKR performance which could be used by AI to generate OKR report later.
