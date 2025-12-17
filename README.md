@@ -26,9 +26,29 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 - `monday_minutes`: Generate Monday Minutes updates for a team or project.
 - `revision_history`: Create revision history / release notes from GitHub PRs and Azure DevOps work items tied to a release.
 - `product_status_report`: Summarize product/release health with progress, risks, bugs, dependencies, and next steps.
-- `okr_report`: Produce OKR performance reports (SignalR/Web PubSub) with predefined KQL queries and insights.
 - `feature_history_traker`: Turn commits/PRs/work items into a narrative feature history grouped by phases/workstreams.
 - `sdk_readme`: Generate or update an SDK README from source code, APIs, dependencies, and samples.
+- `powerbi_telemetry_knowledge`: Generate knowledge of PowerBI Semantic Model Schema and product-specific OKRs.
+- `okr_report`: Produce a report with OKR and corresponding analysis/insights from PowerBI dashboard.
+
+### OKR Report 
+
+- Chat with **pmagent-orchestrator** agent in Copilot to build your product-specific knowledge of PowerBI Semantic Model Schema and OKRs locally. Copilot will use `Power BI Modeling MCP` and `powerbi_telemetry_knowledge` spec from PM Agent to help you generate the initial knwoledge draft.
+
+```text
+create a new PowerBI telemetry knowledge markdown file for <your-product-full-name> based on <links-to-your-product-dashboard>
+```
+
+- PM Agent cannot doscover OKRs from the dashboard directly. Therefore, you may also need to revise the product-specific knowledge in these areas:
+  - `IsAnalysisDimension` for each column: If a column is tagged Yes in IsAnalysisDimension, the column should be treated as a primary candidate for cohort analysis and can be safely used to break results down into slices (segments) for comparisons across groups.
+  - Entity Relationships
+  - Definiation of each OKR(s), including `Time Semantics`, `Telemetry Scope and Filters`, `Metric Calculation Logic`, `Targets, Thresholds, and Guardrails` and `Recommended Breakdowns and Dimensions`. 
+
+- Chat with **pmagent-orchestrator** agent in Copilot to generate a new OKR report for your product. Copilot will use `Power BI Modeling MCP` and `okr_report` spec from PM Agent to help retrive real data from PowerBI dashboard and generate OKR report. 
+
+```text
+generate new okr report for <your-product-name>> based on <your-product-specific-knwoledge-on-local> and write into a new markdown file
+```
 
 ## Remote MCP config (manual)
 

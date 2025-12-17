@@ -32,7 +32,7 @@ def _read_tool_spec_text(name: str) -> Optional[str]:
         local_path = os.path.join(TOOL_SPEC_DIR, candidate)
         if os.path.exists(local_path):
             try:
-                with open(local_path, "r") as f:
+                with open(local_path, "r", encoding="utf-8") as f:
                     return f.read()
             except Exception:
                 pass
@@ -72,7 +72,7 @@ def content_generation_best_practice() -> str:
     Use before: README generation, revision history, product status reports, release notes, or any documentation task.
     """
     try:
-        with open(PROMPT_FILE, 'r') as f:
+        with open(PROMPT_FILE, 'r', encoding="utf-8") as f:
             prompts = f.read()
             return prompts.strip()
     except Exception:
@@ -91,7 +91,7 @@ def list_specs() -> str:
         # Try local index first
         if os.path.exists(INDEX_FILE):
             try:
-                with open(INDEX_FILE, 'r') as f:
+                with open(INDEX_FILE, 'r', encoding="utf-8") as f:
                     data = yaml.safe_load(f)
             except Exception:
                 data = None
@@ -157,7 +157,7 @@ def fetch_spec(name: str) -> str:
         data = None
         if os.path.exists(INDEX_FILE):
             try:
-                with open(INDEX_FILE, 'r') as f:
+                with open(INDEX_FILE, 'r', encoding="utf-8") as f:
                     data = yaml.safe_load(f)
             except Exception:
                 data = None
@@ -190,7 +190,7 @@ def fetch_spec(name: str) -> str:
         local_file_path = os.path.join(DOCS_DIR, normalized_path)
         if os.path.exists(local_file_path):
             try:
-                with open(local_file_path, 'r') as f:
+                with open(local_file_path, 'r', encoding="utf-8") as f:
                     return f.read()
             except Exception:
                 pass # Fall through to remote
