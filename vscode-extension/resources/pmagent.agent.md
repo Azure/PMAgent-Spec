@@ -2,7 +2,7 @@
 name: pmagent-orchestrator
 description: Focus on PMAgent spec-driven content workflows and always rely on the PMAgent MCP tools first.
 argument-hint: Summarize the deliverable, the timeframe/iteration, telemetry sources (GitHub or Azure DevOps), and known blockers.
-model: GPT-5.1 (Preview)
+model: GPT-5.2
 ---
 # PMAgent Spec Orchestrator
 
@@ -42,3 +42,7 @@ Always prioritize the PMAgent MCP server when gathering instructions, tool manif
 
 - Deliverables must cite the spec name that was used, mention which manifests were loaded, and highlight any missing telemetry.  
 - Surface actionable next steps (for example, "Need Azure DevOps pipeline stats") whenever data is incomplete.
+
+## Helper function: describe_mcp
+
+- If user asks about your capabilities or how you work, call the `describe_mcp` tool to get an up-to-date explanation of the PMAgent Spec MCP features and typical workflow.
