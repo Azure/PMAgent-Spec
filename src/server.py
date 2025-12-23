@@ -1,9 +1,16 @@
+import logging
 import os
 from typing import Optional
 
 import requests
 import yaml
 from mcp.server.fastmcp import FastMCP
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 # Initialize FastMCP server
 mcp = FastMCP("Spec Fetcher", host="0.0.0.0", port=8100)
@@ -34,16 +41,16 @@ def _read_tool_spec_text(name: str) -> Optional[str]:
             try:
                 with open(local_path, "r", encoding="utf-8") as f:
                     return f.read()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.exception("Failed to read tool spec from %s: %s", local_path, e)
 
         url = f"{REPO_BASE_URL}/tool_specs/{candidate}"
         try:
             response = requests.get(url)
             if response.status_code == 200:
                 return response.text
-        except Exception:
-            pass
+        except Exception as e:
+            logger.exception("Failed to fetch tool spec from %s: %s", url, e)
 
     return None
 
@@ -60,6 +67,23 @@ def _list_available_tool_specs():
             names.append(os.path.splitext(filename)[0])
     return sorted(set(names))
 
+
+@mcp.tool()
+def describe_mcp() -> str:
+    """Explain the PMAgent Spec MCP capabilities and default workflow to human readers. Only call this function when user asks for it."""
+
+    return (
+        "PMAgent Spec MCP serves spec-driven content for Copilot-style drafting.\n"
+        "Supported specs (see README.md for details):\n"
+        "- monday_minutes: Weekly updates.\n"
+        "- revision_history: Release notes from PRs and ADO items.\n"
+        "- product_status_report: Product/release health summary.\n"
+        "- feature_history_traker: Phase/workstream feature narratives.\n"
+        "- sdk_readme: SDK README generation/update.\n"
+        "- powerbi_telemetry_knowledge: Power BI semantic model knowledge.\n"
+        "- okr_report: OKR reporting with telemetry.\n"
+    )
+
 @mcp.tool()
 def content_generation_best_practice() -> str:
     """**ALWAYS CALL THIS FIRST** when generating any documentation, README, release notes, reports, or content.
@@ -75,8 +99,9 @@ def content_generation_best_practice() -> str:
         with open(PROMPT_FILE, 'r', encoding="utf-8") as f:
             prompts = f.read()
             return prompts.strip()
-    except Exception:
-        return "Error: Could not read system prompts for best practice."
+    except Exception as e:
+        logger.exception("Failed to read system prompts from %s: %s", PROMPT_FILE, e)
+        return f"Error: Could not read system prompts for best practice: {str(e)}"
 
 @mcp.tool()
 def list_specs() -> str:
@@ -93,8 +118,9 @@ def list_specs() -> str:
             try:
                 with open(INDEX_FILE, 'r', encoding="utf-8") as f:
                     data = yaml.safe_load(f)
-            except Exception:
+            except Exception as e:
                 data = None
+                logger.exception("Failed to read local index file %s: %s", INDEX_FILE, e)
         else:
             data = None
             
@@ -105,8 +131,8 @@ def list_specs() -> str:
                  response = requests.get(url)
                  if response.status_code == 200:
                      data = yaml.safe_load(response.text)
-             except Exception:
-                 pass
+             except Exception as e:
+                 logger.exception("Failed to fetch index from %s: %s", url, e)
 
         if not data:
             return "No specifications found (checked local and remote)."
@@ -119,6 +145,7 @@ def list_specs() -> str:
         
         return result
     except Exception as e:
+        logger.exception("Unhandled error while listing specs")
         return f"Error reading index: {str(e)}"
 
 
@@ -159,8 +186,9 @@ def fetch_spec(name: str) -> str:
             try:
                 with open(INDEX_FILE, 'r', encoding="utf-8") as f:
                     data = yaml.safe_load(f)
-            except Exception:
+            except Exception as e:
                 data = None
+                logger.exception("Failed to read local index file %s: %s", INDEX_FILE, e)
         
         if not data:
              url = f"{REPO_BASE_URL}/spec/index.yml"
@@ -168,8 +196,8 @@ def fetch_spec(name: str) -> str:
                  response = requests.get(url)
                  if response.status_code == 200:
                      data = yaml.safe_load(response.text)
-             except Exception:
-                 pass
+             except Exception as e:
+                 logger.exception("Failed to fetch index from %s: %s", url, e)
         
         if not data:
              return "Error: Could not load index file (local or remote)."
@@ -192,7 +220,8 @@ def fetch_spec(name: str) -> str:
             try:
                 with open(local_file_path, 'r', encoding="utf-8") as f:
                     return f.read()
-            except Exception:
+            except Exception as e:
+                logger.exception("Failed to read spec from %s: %s", local_file_path, e)
                 pass # Fall through to remote
         
         # 3. Try Fetching Remote File
@@ -208,6 +237,7 @@ def fetch_spec(name: str) -> str:
             return f"Error: Failed to fetch spec. Status code: {response.status_code}"
 
     except Exception as e:
+        logger.exception("Unhandled error while fetching spec")
         return f"Error fetching spec: {str(e)}"
 
 if __name__ == "__main__":
