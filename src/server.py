@@ -69,22 +69,6 @@ def _list_available_tool_specs():
 
 
 @mcp.tool()
-def describe_mcp() -> str:
-    """Explain the PMAgent Spec MCP capabilities and default workflow to human readers. Only call this function when user asks for it."""
-
-    return (
-        "PMAgent Spec MCP serves spec-driven content for Copilot-style drafting.\n"
-        "Supported specs (see README.md for details):\n"
-        "- monday_minutes: Weekly updates.\n"
-        "- revision_history: Release notes from PRs and ADO items.\n"
-        "- product_status_report: Product/release health summary.\n"
-        "- feature_history_traker: Phase/workstream feature narratives.\n"
-        "- sdk_readme: SDK README generation/update.\n"
-        "- powerbi_telemetry_knowledge: Power BI semantic model knowledge.\n"
-        "- okr_report: OKR reporting with telemetry.\n"
-    )
-
-@mcp.tool()
 def content_generation_best_practice() -> str:
     """**ALWAYS CALL THIS FIRST** when generating any documentation, README, release notes, reports, or content.
     
