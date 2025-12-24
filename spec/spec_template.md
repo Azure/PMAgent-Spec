@@ -1,7 +1,6 @@
 # Spec: <SPEC_NAME>
 Version: 1.0
 Content-Type: <content type>
-Authoring-Mode: <human|ai|hybrid>
 
 ---
 
@@ -61,11 +60,12 @@ Inputs may come from:
 ---
 
 ## 5. Data Requirements
-Detail the structured data the agent must gather (beyond user inputs) before writing.
+Detail the structured data the agent must gather before writing, and explicitly flag what must come from the user versus what the agent can derive.
 
 For each requirement include:
 - **Name**: Short identifier for the signal (e.g., `merged_prs_last_week`).
-- **Description**: What insight it provides and why it matters for the spec.
+- **Category**: `User-provided` (must be asked for) or `Agent-derivable` (gather via tools/context).
+- **Description**: Why it matters for this spec.
 - **Source Preference**: Which MCP server/toolset should be used (e.g., `GitHub MCP – pull_requests`).
 - **Filters**: Time windows, labels, states, or repo scopes to apply.
 - **Fields Needed**: Exact attributes (title, number, merged_at, labels, reviewers, etc.).
@@ -93,7 +93,7 @@ Guidelines:
 ---
 
 ## 7. Fallback Plan
-Explain how to proceed when the recommended MCP server/tool call is unavailable, errors out, or returns insufficient data.
+Explain how to proceed when the recommended MCP server/tool call is unavailable, errors out, or returns insufficient data, and note that the agent must inform the user and confirm before switching to a fallback path.
 
 Outline:
 - Detection logic (e.g., `github` server missing, tool not in `available_tools`, response empty).
@@ -136,19 +136,7 @@ Each section MUST be generated exactly as structured here.
 
 ---
 
-## 10. Task Planning Rules for Agent
-For this spec, the agent must do the following tasks:
-1. Identify missing inputs  
-2. For each missing input, choose a tool or ask user  
-3. Retrieve resources  
-4. Summarize and normalize materials  
-5. Fill in the sections in order  
-6. Perform self-review against Quality Checklist  
-7. Rewrite if criteria fail
-
----
-
-## 11. Quality Checklist
+## 10. Quality Checklist
 The final content MUST satisfy all criteria:
 
 ### Structure
@@ -171,7 +159,7 @@ If any criteria fail → revise before final output.
 
 ---
 
-## 12. Final Output Format
+## 11. Final Output Format
 Specify how the final output must be delivered:
 - Markdown template  
 - JSON schema  
