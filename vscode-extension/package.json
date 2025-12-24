@@ -3,7 +3,7 @@
   "publisher": "pmagent",
   "displayName": "PMAgent Spec MCP",
   "description": "VSCode extension to register PMAgent Spec MCP server",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "engines": {
     "vscode": "^1.80.0"
   },
