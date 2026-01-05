@@ -14,7 +14,7 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 
 - GitHub MCP: Use when repos and PRs live in GitHub (merged PRs, blockers, milestones, upcoming project items). [Repo](https://github.com/github/github-mcp-server)
 - Azure DevOps MCP: Use when telemetry lives in ADO (Boards, pipelines/releases, blockers, upcoming backlog items). [Repo](https://github.com/microsoft/azure-devops-mcp)
-- Power BI Modeling MCP: Use when a spec needs dashboard or semantic model metrics (e.g., OKR or Monday Minutes KPIs). [Repo](https://github.com/microsoft/powerbi-modeling-mcp)
+- Power BI Remote MCP: The remote Power BI MCP server enables AI agents to query Power BI semantic models using natural language.  (e.g., OKR or Monday Minutes KPIs). [Repo](https://learn.microsoft.com/en-us/power-bi/developer/mcp/remote-mcp-server-get-started)
 
 ## Use with GitHub Copilot in VS Code
 
@@ -30,6 +30,8 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 - `sdk_readme`: Generate or update an SDK README from source code, APIs, dependencies, and samples.
 - `powerbi_telemetry_knowledge`: Generate knowledge of PowerBI Semantic Model Schema and product-specific OKRs.
 - `okr_report`: Produce a report with OKR and corresponding analysis/insights from PowerBI dashboard.
+- `spec_creation`: Collect user inputs per `templates/spec_template.md` and generate a new spec that matches that structure.
+- Template injection: Specs can embed `{{template_name.md}}` placeholders; `fetch_spec` will inline the matching file under `templates/` (local first, remote fallback) before returning.
 
 ### OKR Report 
 
