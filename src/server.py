@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -21,6 +22,7 @@ ROOT_DIR = BASE_DIR.parent
 DOCS_DIR = ROOT_DIR / "spec"
 PROMPT_DIR = ROOT_DIR / "prompts"
 TOOL_SPEC_DIR = ROOT_DIR / "tool_specs"
+TEMPLATE_DIR = ROOT_DIR / "templates"
 
 INDEX_FILE = DOCS_DIR / "index.yml"
 PROMPT_FILE = PROMPT_DIR / "system_prompts.md"
@@ -67,6 +69,54 @@ def _list_available_tool_specs():
         if path.suffix.lower() in (".yml", ".yaml"):
             names.append(path.stem)
     return sorted(set(names))
+
+
+def _load_template_file_by_name(name: str) -> Optional[str]:
+    """Load a template by explicit filename (local preferred, remote fallback)."""
+    candidates = [name]
+    if not name.lower().endswith(".md"):
+        candidates.append(f"{name}.md")
+
+    seen = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+
+        local_path = TEMPLATE_DIR / candidate
+        if local_path.exists():
+            try:
+                with local_path.open("r", encoding="utf-8") as f:
+                    return f.read()
+            except Exception as e:
+                logger.exception("Failed to read template from %s: %s", local_path, e)
+
+        url = f"{REPO_BASE_URL}/templates/{candidate}"
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.text
+        except Exception as e:
+            logger.exception("Failed to fetch template from %s: %s", url, e)
+
+    return None
+
+
+def _inject_template_placeholders(spec_text: str):
+    """Replace placeholders like {{filename.md}} with the contents of templates/filename.md."""
+    placeholder_pattern = re.compile(r"\{\{\s*([^\{\}\s]+)\s*\}\}")
+    used_templates = set()
+
+    def _replace(match: re.Match):
+        token = match.group(1).strip()
+        content = _load_template_file_by_name(token)
+        if content is None:
+            return match.group(0)  # leave placeholder untouched
+        used_templates.add(token if token.lower().endswith(".md") else f"{token}.md")
+        return content.strip()
+
+    replaced_text = placeholder_pattern.sub(_replace, spec_text)
+    return replaced_text, used_templates
 
 
 @mcp.tool()
@@ -201,26 +251,33 @@ def fetch_spec(name: str) -> str:
 
         # 2. Try Fetching Local File
         local_file_path = DOCS_DIR / normalized_path
+        spec_text = None
         if local_file_path.exists():
             try:
                 with local_file_path.open('r', encoding="utf-8") as f:
-                    return f.read()
+                    spec_text = f.read()
             except Exception as e:
                 logger.exception("Failed to read spec from %s: %s", local_file_path, e)
-                pass # Fall through to remote
+                spec_text = None  # Fall through to remote
         
         # 3. Try Fetching Remote File
         normalized_remote_path = normalized_path.as_posix()
         url = f"{REPO_BASE_URL}/spec/{normalized_remote_path}"
         
-        response = requests.get(url)
-        
-        if response.status_code == 200:
-            return response.text
-        elif response.status_code == 404:
-            return f"Error: Spec file '{normalized_remote_path}' not found locally or in public repository (404).\nURL: {url}"
-        else:
-            return f"Error: Failed to fetch spec. Status code: {response.status_code}"
+        if spec_text is None:
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                spec_text = response.text
+            elif response.status_code == 404:
+                return f"Error: Spec file '{normalized_remote_path}' not found locally or in public repository (404).\nURL: {url}"
+            else:
+                return f"Error: Failed to fetch spec. Status code: {response.status_code}"
+
+        # 4. Inject template placeholders if present
+        spec_text, _ = _inject_template_placeholders(spec_text)
+
+        return spec_text
 
     except Exception as e:
         logger.exception("Unhandled error while fetching spec")
