@@ -15,6 +15,7 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 - GitHub MCP: Use when repos and PRs live in GitHub (merged PRs, blockers, milestones, upcoming project items). [Repo](https://github.com/github/github-mcp-server)
 - Azure DevOps MCP: Use when telemetry lives in ADO (Boards, pipelines/releases, blockers, upcoming backlog items). [Repo](https://github.com/microsoft/azure-devops-mcp)
 - Power BI Remote MCP: The remote Power BI MCP server enables AI agents to query Power BI semantic models using natural language.  (e.g., OKR or Monday Minutes KPIs). [Repo](https://learn.microsoft.com/en-us/power-bi/developer/mcp/remote-mcp-server-get-started)
+- Kusto/ADX MCP: Use [Azure MCP](https://github.com/microsoft/mcp/tree/main/servers/Azure.Mcp.Server)
 
 ## Use with GitHub Copilot in VS Code
 
