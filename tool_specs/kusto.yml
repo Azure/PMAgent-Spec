@@ -1,0 +1,44 @@
+name: kusto
+display_name: "Azure MCP Kusto (ADX)"
+version: 1
+updated: 2026-01-07
+mode: advisory
+description: >
+  Minimal guidance for Kusto/ADX usage in PMAgent.
+  Rule: whenever a spec/user mentions Kusto, ADX, Azure Data Explorer, or KQL,
+  execute via Azure MCP tool `mcp_azure_mcp_kusto`.
+
+toolsets:
+  description: >
+    Azure MCP exposes Kusto operations via a single router tool.
+    Use discovery (`learn=true`) to find supported sub-commands, then execute.
+  required: [mcp_azure_mcp_kusto]
+  discovery_tools:
+    - mcp_azure_mcp_kusto
+
+capabilities:
+  execute_kql:
+    description: >
+      Run a KQL query against ADX/Kusto using Azure MCP.
+    recommended_calls:
+      - tool: mcp_azure_mcp_kusto
+        purpose: Discover available sub-commands for Kusto/ADX.
+        arguments:
+          intent: "kusto:discover"
+          learn: true
+      - tool: mcp_azure_mcp_kusto
+        purpose: Execute the KQL using the discovered command.
+        arguments:
+          intent: "kusto:query"
+          command: "<discovered_query_command>"
+
+fallback:
+  description: >
+    If Azure MCP Kusto tooling is unavailable, collect minimal inputs for a retry.
+  steps:
+    - action: ask_user
+      prompt: "Provide the ADX/Kusto cluster URI/name and database name."
+    - action: ask_user
+      prompt: "Provide the KQL query and the intended time window (UTC)."
+    - action: document_gap
+      note: "State that Kusto/ADX data could not be fetched via Azure MCP."
