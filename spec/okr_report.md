@@ -56,7 +56,8 @@ Inputs the agent must collect via tools or retrieval before writing:
 - Additional dimensions present in telemetry but not tagged in knowledge when they materially improve insight density.
 
 Inputs may come from:
-- Power BI MCP (preferred) using the knowledge-defined semantic model/tables.
+- PowerBI Remote MCP Server (preferred) using the knowledge-defined semantic model/tables.
+- Azure Data Explorer (ADX or kusto) MCP Server using the knowledge-defined queries.
 - Local files in the workspace (knowledge documents, query definitions).
 - Context/state from the ongoing conversation.
 
@@ -70,7 +71,7 @@ Detail the structured data the agent must gather (beyond user inputs) before wri
 - **okr_values_by_window**: For each OKR and time window: numerator, denominator, metric value, applied filters, time label. Source: Power BI MCP queries. Update cadence: latest available data.
 - **volume_checks**: For the latest completed window per OKR: volume vs threshold, pass/fail flag, rationale. Source: Power BI MCP queries + thresholds from knowledge.
 - **trend_series**: Metric and volume time series for the latest `N` windows per OKR to detect structural changes. Fields: value, numerator, denominator, period label. Update cadence: same as okr_values_by_window.
-- **analysis_dimensions**: Candidate cohort dimensions from knowledge (`IsAnalysisDimension = Yes`) plus common telemetry fields (e.g., scenario/project type, client version, region, error category). Source: knowledge + semantic model.
+- **analysis_dimensions**: Candidate cohort dimensions from knowledge (`IsAnalysisDimension = Yes`) plus common telemetry fields (e.g., scenario/project type, client version, region, error category). Source: knowledge + semantic model or knowledge + kusto queries.
 - **cohort_slices_last_two**: For each dimension, slices for the last two completed windows: slice label, numerator, denominator, metric value, delta vs previous window. Source: Power BI MCP queries.
 - **top_errors_last_two**: Top errors by impact for the last two completed windows, respecting OKR filters. Fields: error code/category, projects/users impacted, events, contribution to failures. Source: Power BI MCP queries.
 - **error_slices_last_two**: Top errors sliced by key dimensions (e.g., client version, scenario) for the last two completed windows. Fields: slice label, error code, projects impacted, events. Source: Power BI MCP queries.
@@ -81,13 +82,15 @@ Detail the structured data the agent must gather (beyond user inputs) before wri
 
 Tool Dependencies:
 - powerbi
+- kusto
 
 ---
 
 ## 7. Fallback Plan
-- Detect missing data: knowledge file unavailable, `powerbi` server missing, query errors, or empty query results.
+- Detect missing data: knowledge file unavailable, `powerbi` server missing, `kusto` server missing, query errors, or empty query results.
 - Alternatives:
-  - If `powerbi` unavailable: ask user to provide exported tables/measures for the required windows, or CSV extracts for OKR values, cohorts, and errors.
+  - If `powerbi` unavailable: ask user to setup [PowerBI Remote MCP Server](https://learn.microsoft.com/en-us/power-bi/developer/mcp/remote-mcp-server-get-started) which supports to query Power BI semantic models using natural language, retrieve model schemas, generate DAX queries, and execute queries to deliver insights from data.
+  - If `kusto` unavailable: ask user to setup [Azure MCP server](https://github.com/Azure/azure-mcp) which contains the kusto capabilities. 
   - If knowledge missing fields: ask user for OKR targets, thresholds, default window definitions, recommended dimensions, and filters.
 - Questions to ask the user:
   - Provide OKR definitions (name, target, window type, default N, filters).
