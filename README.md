@@ -30,13 +30,16 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 - `feature_history_traker`: Turn commits/PRs/work items into a narrative feature history grouped by phases/workstreams.
 - `sdk_readme`: Generate or update an SDK README from source code, APIs, dependencies, and samples.
 - `powerbi_telemetry_knowledge`: Generate knowledge of PowerBI Semantic Model Schema and product-specific OKRs.
-- `okr_report`: Produce a report with OKR and corresponding analysis/insights from PowerBI dashboard.
+- `adx_telemetry_knowledge`: Generate knowledge from ADX (Azure Data Explorer) dashboard json file including predefined queries and filters.
+- `okr_report`: Produce a report with OKR and corresponding analysis/insights from PowerBI semantic model or ADX KQL queries.
 - `spec_creation`: Collect user inputs per `templates/spec_template.md` and generate a new spec that matches that structure.
 - Template injection: Specs can embed `{{template_name.md}}` placeholders; `fetch_spec` will inline the matching file under `templates/` (local first, remote fallback) before returning.
 
 ### OKR Report 
 
-- Chat with **pmagent-orchestrator** agent in Copilot to build your product-specific knowledge of PowerBI Semantic Model Schema and OKRs locally. Copilot will use `Power BI Modeling MCP` and `powerbi_telemetry_knowledge` spec from PM Agent to help you generate the initial knwoledge draft.
+- Chat with **pmagent-orchestrator** agent in Copilot to build your product-specific knowledge:
+  - PowerBI Semantic Model Schema and OKRs Knowledge: Copilot will use `Power BI Modeling MCP` and `powerbi_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
+  - ADX Kusto Query Knowledge: Copilot will use Kusto tools from `Azure MCP` and `adx_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
 
 ```text
 create a new PowerBI telemetry knowledge markdown file for <your-product-full-name> based on <links-to-your-product-dashboard>
@@ -47,7 +50,7 @@ create a new PowerBI telemetry knowledge markdown file for <your-product-full-na
   - Entity Relationships
   - Definiation of each OKR(s), including `Time Semantics`, `Telemetry Scope and Filters`, `Metric Calculation Logic`, `Targets, Thresholds, and Guardrails` and `Recommended Breakdowns and Dimensions`. 
 
-- Chat with **pmagent-orchestrator** agent in Copilot to generate a new OKR report for your product. Copilot will use `Power BI Modeling MCP` and `okr_report` spec from PM Agent to help retrive real data from PowerBI dashboard and generate OKR report. 
+- Chat with **pmagent-orchestrator** agent in Copilot to generate a new OKR report for your product. Copilot will use `Power BI Modeling MCP` or `Azure MCP (with Kusto)` and `okr_report` spec from PM Agent to help retrive real data from PowerBI dashboard or Kusto queries and generate OKR report. 
 
 ```text
 generate new okr report for <your-product-name>> based on <your-product-specific-knwoledge-on-local> and write into a new markdown file
