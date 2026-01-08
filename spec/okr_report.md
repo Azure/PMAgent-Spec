@@ -145,16 +145,42 @@ Each section MUST be generated exactly as structured here.
 - Mandatory details: Threshold definitions from knowledge and explicit pass/fail flags.
 
 ### Section: Trend Analysis
-- Objective: Identify structural changes and provide concise insights over the latest `N` windows.
-- Expected length: 3–5 insights per OKR/KR.
-- Required elements: Structural changes (sustained changes, dips/recoveries, step changes > X percentage points as defined/obvious), commentary on volume stability, concise insights grounded in data.
-- Mandatory details: Cite periods where changes occur; avoid speculation.
+- Objective: Explain meaningful structural changes in the metric over the latest `N` windows (what changed, when it changed, and whether it persisted).
+- Expected length: 3–5 insights per OKR/KR, prioritizing signal over completeness.
+- Scope & approach (flexible):
+  - Start from the headline time series and reason holistically before segmenting.
+  - Treat a trend as a pattern across windows, not a single data point.
+  - Adapt the method to signal strength, volatility, and volume.
+- Reference patterns (guidance, not a checklist; apply only when supported by data): sustained shifts, step changes, dips/recoveries, acceleration/deceleration, stability vs. volatility, and volume-supported vs. volume-artifact movement.
+- Required elements per insight:
+  - State what changed and when (cite specific windows/periods).
+  - Indicate whether the change appears structural (persistent) or transient.
+  - Add brief volume context (stable/growing/shrinking; numerator/denominator shifts for rates when relevant).
+- Guardrails:
+  - Avoid speculation/causal claims unless directly supported.
+  - Do not restate raw metrics; interpret patterns.
+  - If no meaningful structural change exists, explicitly state the series is stable / within expected variance.
 
 ### Section: Cohort Analysis (Last Two Completed Windows)
-- Objective: Surface cohort differences using key analysis dimensions.
-- Expected length: Tables per dimension plus 2–4 insights.
-- Required elements: For each key dimension (from knowledge tags plus obvious telemetry dimensions), show slices for the last two completed windows, deltas between windows, and interpretation of movers/outliers.
-- Mandatory details: At least the two most relevant dimensions; highlight top improvements/regressions with volume context.
+- Objective: Explain what drove change in the baseline OKR/KR values.
+- Expected length: 2–5 insights total plus compact tables for the highest-signal cohorts.
+- Baseline: Use the OKR/KR metric values (and their numerator/denominator volumes) as the headline; cohort analysis explains the delta between the last two completed windows.
+- Cohort formation:
+  - Choose segmentation dimensions based on context and signal (from knowledge + telemetry, try at least 3-5 dimensions or bundle of dimensions).
+  - Prefer mutually exclusive cohorts when doing attribution; allow overlaps for exploratory insights.
+  - Adjust granularity dynamically to avoid fragmentation/noise.
+- Measure change and impact (per cohort, when possible): current value, previous value, absolute change (Δ).
+  - Rank/group cohorts by impact; favor absolute change over percentages.
+  - Use metrics appropriate to context; for rates/ratios, also show numerator and denominator deltas.
+- Attribute contribution (when well-defined):
+  - If overall delta is meaningful: `ContributionPct = Δ(cohort) / Δ(overall)`.
+  - If overall delta is zero/unclear: describe offsetting cohort movements instead of forcing a percentage.
+- Drill down selectively: deepen analysis only for high-impact or high-signal cohorts; use multi-dimensional intersections sparingly.
+- Reconcile and validate: cohort-level changes should reconcile to the headline metric; treat mismatches as definition/dedup/filter issues before behavioral interpretation.
+- Interpretation guardrails:
+  - Treat undefined/infinite % changes as “starting from near zero.”
+  - Avoid percentage-only narratives; include absolute values and deltas.
+  - Don’t confuse biggest % change with biggest contribution; check overlap/dedup if cohort results conflict with headline.
 
 ### Section: Error Drilldown (Last Two Completed Windows)
 - Objective: Identify top errors and where they concentrate.
@@ -211,16 +237,13 @@ If any criteria fail → revise before final output.
 Deliver the report in Markdown using the exact skeleton below:
 
 ```markdown
-# <OKR Report Title>
+# <OKR 1 Report Title>
 
 **Report date:** <YYYY-MM-DD>  
-**OKR scope:** <Product/Client/Service>  
-**Time window:** <Default window description and N>  
 
-Global filters applied:
-- <Filter 1>
-- <Filter 2>
-- ...
+| OKR/KR Name | OKR Scope | Time Window | Global filters applied | 
+|------------:|:----------|:------------|:-----------------------|
+| <NAME_OF_OKR> | <Product/Client/Service/Feature> | <Default window description and N> | <Filter 1>; <Filter 2>; ... | 
 
 ## 1. OKR/KR Values — Latest N Windows
 <Tables per OKR/KR>
@@ -232,11 +255,13 @@ Global filters applied:
 <3–5 insights per OKR/KR; note volume stability>
 
 ## 4. Cohort Analysis (Last Two Completed Windows)
-<Tables and insights by key dimensions>
+<Tables and insights per OKR/KR by key dimensions>
 
 ## 5. Error Drilldown (Last Two Completed Windows)
-<Top errors and slices by key dimensions>
+<Top errors and slices per OKR/KR by key dimensions>
 
 ## 6. Summary & Next Actions
-<4–6 bullets with status, risks, and actions>
+<4–6 bullets with status, risks, and actions per OKR/KR>
+
+
 ```
