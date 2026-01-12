@@ -7,9 +7,15 @@ This VSCode extension automatically registers the PMAgent Spec MCP server at `ht
 ## Features
 
 - Automatically registers the PMAgent Spec MCP server on activation
-- Bundles the PMAgent Copilot agent template and drops it into `.github/agents/pmagent.agent.md` when a workspace is open (skips if you already have one)
+- Adds a command to install the PMAgent Copilot agent template into `.github/agents/pmagent.agent.md` only when you request it
+- Adds a command to remove the installed agent template from your workspace
 - Configurable server URL via VSCode settings
 - Updates registration when configuration changes
+
+## Commands
+
+- `PMAgent: Install agent into Workspace` — copies the bundled agent template into `.github/agents/pmagent.agent.md` in the selected workspace (prompts before overwriting).
+- `PMAgent: Remove agent from Workspace` — deletes the agent file from the selected workspace (prompts for confirmation).
 
 ## Configuration
 

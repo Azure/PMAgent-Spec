@@ -19,8 +19,9 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 
 ## Use with GitHub Copilot in VS Code
 
-1. In Copilot Chat, choose the **pmagent-orchestrator** agent (the extension adds `.github/agents/pmagent.agent.md` for you).
-2. Describe the deliverable plus telemetry sources (GitHub vs ADO vs Power BI) and the repos/projects/date range.
+1. Use `F1` to open vscode command and run `PMAgent: Install agent into Workspace`
+2. In Copilot Chat, choose the **pmagent-orchestrator** agent (the extension adds `.github/agents/pmagent.agent.md` for you).
+3. Describe the deliverable plus telemetry sources (GitHub vs ADO vs Power BI) and the repos/projects/date range.
 
 ## Supported scenarios (specs)
 
