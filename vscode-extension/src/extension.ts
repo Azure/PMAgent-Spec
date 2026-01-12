@@ -19,8 +19,14 @@ export function activate(context: vscode.ExtensionContext) {
     // Register via settings.json (Stable API)
     updateMcpSettings(serverUrl);
 
-    // Place the Copilot agent template into the workspace if needed
-    void ensureAgentTemplate(context);
+    // Place the Copilot skill into the workspace if needed
+    void ensureSkillTemplate(context, { overwrite: false });
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('pmagentSpecMcp.installSkill', async () => {
+            await ensureSkillTemplate(context, { overwrite: true, showNotifications: true });
+        })
+    );
 
     // Listen for configuration changes
     context.subscriptions.push(
@@ -76,43 +82,81 @@ async function updateMcpSettings(url: string) {
     }
 }
 
-async function ensureAgentTemplate(context: vscode.ExtensionContext) {
+async function ensureSkillTemplate(
+    context: vscode.ExtensionContext,
+    options: { overwrite: boolean; showNotifications?: boolean }
+) {
     const workspaces = vscode.workspace.workspaceFolders;
     if (!workspaces || workspaces.length === 0) {
-        outputChannel.appendLine('No workspace open; skipping agent template copy.');
+        outputChannel.appendLine('No workspace open; skipping skill copy.');
+        if (options.showNotifications) {
+            vscode.window.showWarningMessage('No workspace is open; cannot install Copilot skill.');
+        }
         return;
     }
 
-    const templateUri = vscode.Uri.joinPath(context.extensionUri, 'resources', 'pmagent.agent.md');
+    const templateUri = vscode.Uri.joinPath(
+        context.extensionUri,
+        'resources',
+        'skills',
+        'pmagent-spec',
+        'SKILL.md'
+    );
+
     let templateContent: Uint8Array;
     try {
         templateContent = await vscode.workspace.fs.readFile(templateUri);
     } catch (error) {
-        outputChannel.appendLine(`Error reading bundled agent template: ${error}`);
+        outputChannel.appendLine(`Error reading bundled skill template: ${error}`);
+        if (options.showNotifications) {
+            vscode.window.showErrorMessage(`Failed to read bundled skill template: ${error}`);
+        }
         return;
     }
 
-    for (const workspace of workspaces) {
-        const agentsDir = vscode.Uri.joinPath(workspace.uri, '.github', 'agents');
-        const targetUri = vscode.Uri.joinPath(agentsDir, 'pmagent.agent.md');
+    let installedCount = 0;
+    let skippedCount = 0;
+    let failedCount = 0;
 
-        try {
-            await vscode.workspace.fs.stat(targetUri);
-            outputChannel.appendLine(`Agent template already exists at ${targetUri.fsPath}; leaving it untouched.`);
-            continue;
-        } catch (error) {
-            if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') {
-                outputChannel.appendLine(`Could not check for existing agent at ${targetUri.fsPath}: ${error}`);
+    for (const workspace of workspaces) {
+        const skillsDir = vscode.Uri.joinPath(workspace.uri, '.github', 'skills', 'pmagent-spec');
+        const targetUri = vscode.Uri.joinPath(skillsDir, 'SKILL.md');
+
+        if (!options.overwrite) {
+            try {
+                await vscode.workspace.fs.stat(targetUri);
+                outputChannel.appendLine(`Skill already exists at ${targetUri.fsPath}; leaving it untouched.`);
+                skippedCount++;
                 continue;
+            } catch (error) {
+                if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') {
+                    outputChannel.appendLine(`Could not check for existing skill at ${targetUri.fsPath}: ${error}`);
+                    failedCount++;
+                    continue;
+                }
             }
         }
 
         try {
-            await vscode.workspace.fs.createDirectory(agentsDir);
+            await vscode.workspace.fs.createDirectory(skillsDir);
             await vscode.workspace.fs.writeFile(targetUri, templateContent);
-            outputChannel.appendLine(`Copied PMAgent Copilot agent template to ${targetUri.fsPath}`);
+            outputChannel.appendLine(`Installed PMAgent Copilot skill to ${targetUri.fsPath}`);
+            installedCount++;
         } catch (error) {
-            outputChannel.appendLine(`Failed to copy agent template to ${targetUri.fsPath}: ${error}`);
+            outputChannel.appendLine(`Failed to install skill to ${targetUri.fsPath}: ${error}`);
+            failedCount++;
+        }
+    }
+
+    if (options.showNotifications) {
+        if (failedCount > 0) {
+            vscode.window.showWarningMessage(
+                `Installed Copilot skill to ${installedCount} workspace(s); ${skippedCount} unchanged; ${failedCount} failed.`
+            );
+        } else {
+            vscode.window.showInformationMessage(
+                `Installed Copilot skill to ${installedCount} workspace(s); ${skippedCount} unchanged.`
+            );
         }
     }
 }

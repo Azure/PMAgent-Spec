@@ -2,7 +2,7 @@
 
 [![Install in VS Code](https://img.shields.io/badge/Install%20in%20VS%20Code-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=pmagent.pmagent-spec-mcp)
 
-PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent content specs (Monday Minutes, revision histories, OKR reports, SDK READMEs, etc.) to GitHub Copilot or any MCP-capable client. The companion VS Code extension auto-registers the hosted server and drops the `pmagent-orchestrator` agent template into your repo so Copilot can immediately call the PMAgent tools.
+PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent content specs (Monday Minutes, revision histories, OKR reports, SDK READMEs, etc.) to GitHub Copilot or any MCP-capable client. The companion VS Code extension auto-registers the hosted server and installs a Copilot Agent Skill into your repo so Copilot can load the PMAgent workflow when relevant.
 
 ## Install in VS Code
 
@@ -19,7 +19,7 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 
 ## Use with GitHub Copilot in VS Code
 
-1. In Copilot Chat, choose the **pmagent-orchestrator** agent (the extension adds `.github/agents/pmagent.agent.md` for you).
+1. Ensure Agent Skills are enabled in VS Code (`chat.useAgentSkills`). The extension adds `.github/skills/pmagent-spec/SKILL.md` for you.
 2. Describe the deliverable plus telemetry sources (GitHub vs ADO vs Power BI) and the repos/projects/date range.
 
 ## Supported scenarios (specs)
