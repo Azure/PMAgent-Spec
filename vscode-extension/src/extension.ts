@@ -19,8 +19,11 @@ export function activate(context: vscode.ExtensionContext) {
     // Register via settings.json (Stable API)
     updateMcpSettings(serverUrl);
 
-    // Place the Copilot agent template into the workspace if needed
-    void ensureAgentTemplate(context);
+    // Commands to manage the agent template on demand
+    context.subscriptions.push(
+        vscode.commands.registerCommand('pmagentSpecMcp.installAgent', () => installAgentTemplate(context)),
+        vscode.commands.registerCommand('pmagentSpecMcp.removeAgent', removeAgentTemplate)
+    );
 
     // Listen for configuration changes
     context.subscriptions.push(
@@ -76,44 +79,128 @@ async function updateMcpSettings(url: string) {
     }
 }
 
-async function ensureAgentTemplate(context: vscode.ExtensionContext) {
+type WorkspacePickItem = vscode.QuickPickItem & { folder: vscode.WorkspaceFolder };
+
+async function pickWorkspaceFolder(placeHolder: string): Promise<vscode.WorkspaceFolder | undefined> {
     const workspaces = vscode.workspace.workspaceFolders;
     if (!workspaces || workspaces.length === 0) {
-        outputChannel.appendLine('No workspace open; skipping agent template copy.');
-        return;
+        outputChannel.appendLine('No workspace open; cannot manage agent template.');
+        vscode.window.showWarningMessage('Open a workspace before managing the PMAgent agent.');
+        return undefined;
     }
 
+    if (workspaces.length === 1) {
+        return workspaces[0];
+    }
+
+    const selection = await vscode.window.showQuickPick(
+        workspaces.map<WorkspacePickItem>(folder => ({
+            label: folder.name,
+            description: folder.uri.fsPath,
+            folder
+        })),
+        { placeHolder }
+    );
+
+    return selection?.folder;
+}
+
+async function readBundledTemplate(context: vscode.ExtensionContext): Promise<Uint8Array | undefined> {
     const templateUri = vscode.Uri.joinPath(context.extensionUri, 'resources', 'pmagent.agent.md');
-    let templateContent: Uint8Array;
     try {
-        templateContent = await vscode.workspace.fs.readFile(templateUri);
+        return await vscode.workspace.fs.readFile(templateUri);
     } catch (error) {
         outputChannel.appendLine(`Error reading bundled agent template: ${error}`);
+        vscode.window.showErrorMessage('Failed to read bundled PMAgent agent template.');
+        return undefined;
+    }
+}
+
+async function installAgentTemplate(context: vscode.ExtensionContext) {
+    const workspace = await pickWorkspaceFolder('Select a workspace to install the PMAgent agent template');
+    if (!workspace) {
         return;
     }
 
-    for (const workspace of workspaces) {
-        const agentsDir = vscode.Uri.joinPath(workspace.uri, '.github', 'agents');
-        const targetUri = vscode.Uri.joinPath(agentsDir, 'pmagent.agent.md');
+    const templateContent = await readBundledTemplate(context);
+    if (!templateContent) {
+        return;
+    }
 
-        try {
-            await vscode.workspace.fs.stat(targetUri);
-            outputChannel.appendLine(`Agent template already exists at ${targetUri.fsPath}; leaving it untouched.`);
-            continue;
-        } catch (error) {
-            if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') {
-                outputChannel.appendLine(`Could not check for existing agent at ${targetUri.fsPath}: ${error}`);
-                continue;
-            }
-        }
+    const agentsDir = vscode.Uri.joinPath(workspace.uri, '.github', 'agents');
+    const targetUri = vscode.Uri.joinPath(agentsDir, 'pmagent.agent.md');
 
-        try {
-            await vscode.workspace.fs.createDirectory(agentsDir);
-            await vscode.workspace.fs.writeFile(targetUri, templateContent);
-            outputChannel.appendLine(`Copied PMAgent Copilot agent template to ${targetUri.fsPath}`);
-        } catch (error) {
-            outputChannel.appendLine(`Failed to copy agent template to ${targetUri.fsPath}: ${error}`);
+    let shouldWrite = true;
+    try {
+        await vscode.workspace.fs.stat(targetUri);
+        const choice = await vscode.window.showWarningMessage(
+            `pmagent.agent.md already exists in ${workspace.name}. Replace it?`,
+            { modal: true },
+            'Replace'
+        );
+        shouldWrite = choice === 'Replace';
+    } catch (error) {
+        if (!(error instanceof vscode.FileSystemError) || error.code !== 'FileNotFound') {
+            outputChannel.appendLine(`Could not check for existing agent at ${targetUri.fsPath}: ${error}`);
+            vscode.window.showErrorMessage('Could not verify existing PMAgent agent file.');
+            return;
         }
+    }
+
+    if (!shouldWrite) {
+        outputChannel.appendLine('Install aborted by user; existing agent left untouched.');
+        return;
+    }
+
+    try {
+        await vscode.workspace.fs.createDirectory(agentsDir);
+        await vscode.workspace.fs.writeFile(targetUri, templateContent);
+        outputChannel.appendLine(`Copied PMAgent Copilot agent template to ${targetUri.fsPath}`);
+        vscode.window.showInformationMessage(`PMAgent agent installed to ${workspace.name}.`);
+    } catch (error) {
+        outputChannel.appendLine(`Failed to copy agent template to ${targetUri.fsPath}: ${error}`);
+        vscode.window.showErrorMessage('Failed to install PMAgent agent template.');
+    }
+}
+
+async function removeAgentTemplate() {
+    const workspace = await pickWorkspaceFolder('Select a workspace to remove the PMAgent agent template');
+    if (!workspace) {
+        return;
+    }
+
+    const targetUri = vscode.Uri.joinPath(workspace.uri, '.github', 'agents', 'pmagent.agent.md');
+
+    try {
+        await vscode.workspace.fs.stat(targetUri);
+    } catch (error) {
+        if (error instanceof vscode.FileSystemError && error.code === 'FileNotFound') {
+            vscode.window.showInformationMessage('No PMAgent agent file found to remove.');
+            outputChannel.appendLine(`No agent file at ${targetUri.fsPath}; nothing to remove.`);
+            return;
+        }
+        outputChannel.appendLine(`Could not check for existing agent at ${targetUri.fsPath}: ${error}`);
+        vscode.window.showErrorMessage('Could not verify existing PMAgent agent file.');
+        return;
+    }
+
+    const confirmation = await vscode.window.showWarningMessage(
+        `Remove pmagent.agent.md from ${workspace.name}?`,
+        { modal: true },
+        'Remove'
+    );
+    if (confirmation !== 'Remove') {
+        outputChannel.appendLine('Remove aborted by user.');
+        return;
+    }
+
+    try {
+        await vscode.workspace.fs.delete(targetUri);
+        outputChannel.appendLine(`Removed PMAgent agent template from ${targetUri.fsPath}`);
+        vscode.window.showInformationMessage(`PMAgent agent removed from ${workspace.name}.`);
+    } catch (error) {
+        outputChannel.appendLine(`Failed to remove agent template from ${targetUri.fsPath}: ${error}`);
+        vscode.window.showErrorMessage('Failed to remove PMAgent agent template.');
     }
 }
 

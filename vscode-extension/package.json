@@ -11,10 +11,22 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onCommand:pmagentSpecMcp.installAgent",
+    "onCommand:pmagentSpecMcp.removeAgent"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "pmagentSpecMcp.installAgent",
+        "title": "PMAgent: Install agent into Workspace"
+      },
+      {
+        "command": "pmagentSpecMcp.removeAgent",
+        "title": "PMAgent: Remove agent from Workspace"
+      }
+    ],
     "configuration": {
       "title": "PMAgent Spec MCP",
       "properties": {
