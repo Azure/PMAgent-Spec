@@ -20,8 +20,13 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 ## Use with GitHub Copilot in VS Code
 
 1. Use `F1` to open vscode command and run `PMAgent: Install agent into Workspace`
-2. In Copilot Chat, choose the **pmagent-orchestrator** agent (the extension adds `.github/agents/pmagent.agent.md` for you).
-3. Describe the deliverable plus telemetry sources (GitHub vs ADO vs Power BI) and the repos/projects/date range.
+
+> [!IMPORTANT]
+> PM Agent will be enabled for any workspace automatically. Once you install it into your workspace manually with this command, it will add `.github/agents/pmagent.agent.md` for you automatically. 
+
+2. In Copilot Chat, choose the **pmagent-orchestrator** agent. 
+
+3. Describe the deliverables you need, and include any additional resources if available. 
 
 ## Supported scenarios (specs)
 
@@ -36,26 +41,62 @@ PMAgent-Spec is an MCP (Model Context Protocol) server that delivers PMAgent con
 - `spec_creation`: Collect user inputs per `templates/spec_template.md` and generate a new spec that matches that structure.
 - Template injection: Specs can embed `{{template_name.md}}` placeholders; `fetch_spec` will inline the matching file under `templates/` (local first, remote fallback) before returning.
 
-### OKR Report 
+## Quick Start
 
-- Chat with **pmagent-orchestrator** agent in Copilot to build your product-specific knowledge:
-  - PowerBI Semantic Model Schema and OKRs Knowledge: Copilot will use `Power BI Modeling MCP` and `powerbi_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
-  - ADX Kusto Query Knowledge: Copilot will use Kusto tools from `Azure MCP` and `adx_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
+### Quick Start: Build Telemetry and OKR knowledge for your product  
+
+- Chat with **pmagent-orchestrator** agent in Copilot to build your product-specific telemetry and OKR knowledge:
+  - **PowerBI Semantic Model Schema and OKRs Knowledge**: Copilot will use `Power BI Modeling MCP` and `powerbi_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
+  - **ADX Kusto Query Knowledge**: Copilot will use Kusto tools from `Azure MCP` and `adx_telemetry_knowledge` spec from PM Agent to help you generate the initial knowledge draft.
 
 ```text
-create a new PowerBI telemetry knowledge markdown file for <your-product-full-name> based on <links-to-your-product-dashboard>
+create a new PowerBI telemetry knowledge for <your-product-full-name> based on <links-to-your-powerbi-dashboard>.
 ```
 
-- PM Agent cannot doscover OKRs from the dashboard directly. Therefore, you may also need to revise the product-specific knowledge in these areas:
-  - `IsAnalysisDimension` for each column: If a column is tagged Yes in IsAnalysisDimension, the column should be treated as a primary candidate for cohort analysis and can be safely used to break results down into slices (segments) for comparisons across groups.
+```text
+create a new ADX telemetry knowledge for <your-product-full-name> based on <your-adx-dashboard-json-file>.
+```
+
+> [!IMPORTANT]
+> The PM Agent retrieves the full semantic model or the underlying Kusto queries from your dashboard. Removing unnecessary tiles can help the agent stay focused on the OKRs that matter most.
+
+- Review the knowledge draft generated from PM Agent:
+  - Abbreviation of your product.
+  - `IsAnalysisDimension` for each column or filter: If a column or filter is tagged Yes in IsAnalysisDimension, this column or filter should be treated as a primary candidate for cohort analysis and can be safely used to break results down into slices (segments) for comparisons across groups.
   - Entity Relationships
   - Definiation of each OKR(s), including `Time Semantics`, `Telemetry Scope and Filters`, `Metric Calculation Logic`, `Targets, Thresholds, and Guardrails` and `Recommended Breakdowns and Dimensions`. 
 
-- Chat with **pmagent-orchestrator** agent in Copilot to generate a new OKR report for your product. Copilot will use `Power BI Modeling MCP` or `Azure MCP (with Kusto)` and `okr_report` spec from PM Agent to help retrive real data from PowerBI dashboard or Kusto queries and generate OKR report. 
+> [!IMPORTANT]
+> The `Power BI Modeling MCP` cannot automatically retrieve dashboard visual information. As a result, the generated OKRs may be AI speculation and might not align with your actual dashboard.
+
+### Quick Start: Create a new OKR report
+
+- Chat with **pmagent-orchestrator** agent in Copilot to create a new OKR report. The **pmagent-orchestrator** agent will retrive your product-specific knowledge in local workspace.  
 
 ```text
-generate new okr report for <your-product-name>> based on <your-product-specific-knwoledge-on-local> and write into a new markdown file
+Create a new OKR report for <your-product-name>
 ```
+
+> [!IMPORTANT]
+> The PM Agent can run cohort analysis using the semantic model or the underlying Kusto queries. However, if the dashboard is based on aggregated data, the analysis scope will be limited to the dimensions that remain after aggregation.
+
+### Quick Start: Create a new Monday Minutes
+
+- Prepare a local markdown file include all available resources for your Monday Minutes, for example: 
+  - Path or file name of your OKR report;
+  - Links or filters of Azure DevOps work items;
+  - Links or filters of GitHub issues or PRs;
+  - Links to specific product blogs.
+- Chat with **pmagent-orchestrator** agent in Copilot to create a Monday Minutes draft. 
+
+```text
+Create a new Monday Minutes for <your-product-name> with resources in <your-available-resources-file>
+```
+
+### Quick Start: Contribute your own spec
+
+- Chat with **pmagent-orchestrator** agent in Copilot to create a a new spec for your scenario. The **pmagent-orchestrator** agent will use spec template automatically and help you create the draft. 
+- Review the draft and follow `CONTRIBUTING.md` to contribute your spec to others.
 
 ## Remote MCP config (manual)
 
