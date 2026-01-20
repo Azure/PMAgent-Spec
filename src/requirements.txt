@@ -2,3 +2,5 @@ mcp
 pyyaml
 requests
 uvicorn
+azure-ai-projects>=2.0.0b3
+azure-identity>=1.26.0b1
