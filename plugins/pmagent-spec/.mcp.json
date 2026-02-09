@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "pmagent-spec": {
+      "type": "http",
+      "url": "https://pmagent-spec.nicesmoke-219d4124.eastus2.azurecontainerapps.io/mcp",
+      "tools": [
+        "content_generation_best_practice",
+        "list_specs",
+        "get_tool_manifest",
+        "fetch_spec"
+      ]
+    }
+  }
+}

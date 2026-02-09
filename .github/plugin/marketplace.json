@@ -1,0 +1,22 @@
+{
+  "name": "pmagent-spec",
+  "metadata": {
+    "description": "PMAgent-Spec plugin for GitHub Copilot",
+    "version": "1.0.0"
+  },
+  "owner": {
+    "name": "PMAgent Development Team",
+    "email": "chenyl@microsoft.com"
+  },
+  "plugins": [
+    {
+      "name": "pmagent-spec",
+      "source": "plugins/pmagent-spec",
+      "description": "PMAgent-Spec MCP server config + skill.",
+      "version": "1.0.0",
+      "skills": [
+        "./skills/pmagent-spec"
+      ]
+    }
+  ]
+}
